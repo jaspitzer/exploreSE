@@ -283,42 +283,23 @@ server <- function(input, output, session) {
   has_precomputed_de <- shiny::reactive({
     shiny::req(rv$se)
 
-    if(!is.null(rv$se) && methods::is(rv$se, "DeeDeeExperiment") && !is.null(DeeDeeExperiment::getDEANames(rv$se))){
-      TRUE
-    }else{
-      !is.null(S4Vectors::metadata(rv$se)$de_results) &&
-        is.list(S4Vectors::metadata(rv$se)$de_results) &&
-        length(S4Vectors::metadata(rv$se)$de_results) > 0
-    }
+    .check_precomputed_de(rv$se)
   })
 
   has_precomputed_fe <- shiny::reactive({
     shiny::req(rv$se)
-    if(!is.null(rv$se) && methods::is(rv$se, "DeeDeeExperiment") && !is.null(DeeDeeExperiment::getFEANames(rv$se))){
-      TRUE
-    }else{
-      !is.null(S4Vectors::metadata(rv$se)$fe_results) &&
-        is.list(S4Vectors::metadata(rv$se)$fe_results) &&
-        length(S4Vectors::metadata(rv$se)$fe_results) > 0
-    }
+    .check_precomputed_fe(rv$se)
   })
 
   # Get precomputed DE comparisons
   de_comparisons <- shiny::reactive({
     shiny::req(has_precomputed_de())
-    if(methods::is(rv$se, "DeeDeeExperiment")){
-      DeeDeeExperiment::getDEANames(rv$se)
-    }else{
-      names(S4Vectors::metadata(rv$se)$de_results)
-    }
+    .de_results_names(rv$se)
   })
 
   fes <- shiny::reactive({
     shiny::req(has_precomputed_fe())
-    if(methods::is(rv$se, "DeeDeeExperiment")){
-      return(names(DeeDeeExperiment::getFEAList(rv$se, input[[input$de_comparison]])))
-    }
-    return(names(S4Vectors::metadata(rv$se)$fe_results[[input$de_comparison]]))
+    .fe_results_names(rv$se, input$de_comparison)
   })
 
   # Update UI inputs when data loads
@@ -456,8 +437,8 @@ server <- function(input, output, session) {
     if (has_precomputed_de() && !is.null(input$de_comparison)) {
       # Load precomputed results
       if(methods::is(rv$se, "DeeDeeExperiment")){
-        de_res <- DeeDeeExperiment::getDEA(rv$se, dea_name = input$de_comparison)
-        colnames(de_res) <- c("log2FoldChange", "pvalue", "padj")
+        de_res <- .de_result(rv$se, input$de_comparison)
+        # colnames(de_res) <- c("log2FoldChange", "pvalue", "padj")
       }else{
         de_res <- S4Vectors::metadata(rv$se)$de_results[[input$de_comparison]]
       }
@@ -485,7 +466,7 @@ server <- function(input, output, session) {
     if (has_precomputed_fe()) {
       # Load precomputed results
       if(methods::is(rv$se, "DeeDeeExperiment")){
-        fe_res <- DeeDeeExperiment::getFEAList(rv$se, dea_name = input$de_comparison)
+        fe_res <- .fe_result(rv$se, input$de_comparison)
       }else{
         fe_res <- S4Vectors::metadata(rv$se)$fe_results[[input$de_comparison]]
       }

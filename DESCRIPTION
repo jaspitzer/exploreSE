@@ -10,6 +10,8 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Imports: 
     BiocGenerics,
+    clusterProfiler,
+    DeeDeeExperiment,
     DESeq2,
     dplyr,
     DT,
@@ -19,9 +21,13 @@ Imports:
     magrittr,
     matrixStats,
     methods,
+    msigdbr,
+    org.Hs.eg.db,
+    org.Mm.eg.db,
     plotly,
     purrr,
     readr,
+    rlang,
     S4Vectors,
     shiny,
     shinyWidgets,
@@ -29,4 +35,5 @@ Imports:
     stringr,
     SummarizedExperiment,
     tibble,
+    tidyr,
     tidyselect
