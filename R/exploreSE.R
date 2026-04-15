@@ -471,9 +471,6 @@ server <- function(input, output, session) {
         fe_res <- S4Vectors::metadata(rv$se)$fe_results[[input$de_comparison]]
       }
       return(fe_res)
-    } else if (!is.null(rv$fe_results)) {
-      # Use computed results
-      return(rv$fe_results)
     } else {
       return(NULL)
     }

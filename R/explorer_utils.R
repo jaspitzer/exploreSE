@@ -43,6 +43,6 @@
 }
 
 .fe_result <- function(SE, NAME){
-  fe_list <- DeeDeeExperiment::getFEAList(SE, NAME)
+  fe_list <- DeeDeeExperiment::getFEAList(SE, NAME, format = "original") %>% purrr::map(BiocGenerics::as.data.frame)
   return(fe_list)
 }
