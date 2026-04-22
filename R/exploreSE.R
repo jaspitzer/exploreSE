@@ -436,22 +436,9 @@ server <- function(input, output, session) {
   current_de_results <- shiny::reactive({
     if (has_precomputed_de() && !is.null(input$de_comparison)) {
       # Load precomputed results
-      if(methods::is(rv$se, "DeeDeeExperiment")){
-        de_res <- .de_result(rv$se, input$de_comparison)
-        # colnames(de_res) <- c("log2FoldChange", "pvalue", "padj")
-      }else{
-        de_res <- S4Vectors::metadata(rv$se)$de_results[[input$de_comparison]]
-      }
 
-
-      # Ensure it's a data frame
-      if (methods::is(de_res, "DESeqResults")) {
-        de_res <- as.data.frame(de_res) %>%
-          tibble::rownames_to_column("gene_id")
-      } else if (!"gene_id" %in% colnames(de_res) && !is.null(rownames(de_res))) {
-        de_res <- de_res %>% as.data.frame() %>%
-          tibble::rownames_to_column("gene_id")
-      }
+      de_res <- .de_result(rv$se, input$de_comparison) %>%
+        tibble::rownames_to_column("gene_id")
       return(de_res)
     } else if (!is.null(rv$de_results)) {
       # Use computed results
@@ -705,114 +692,123 @@ server <- function(input, output, session) {
     shiny::req(de_data, input$padj_cutoff_volcano, input$lfc_cutoff_volcano, rv$up_col, rv$dn_col, rv$highlight_col)
     colors_acute <- c("Up" = rv$up_col, "Down" = rv$dn_col, "NS" = "grey70", "Highlighted" = rv$highlight_col)
 
-    # Prepare data
-    volcano_df <- de_data %>%
-      dplyr::filter(!is.na(padj) & !is.na(log2FoldChange) & !is.infinite(log2FoldChange)) %>%
-      dplyr::mutate(
-        neg_log10_padj = -log10(padj),
-        sig = dplyr::case_when(
-          padj < input$padj_cutoff_volcano & log2FoldChange > input$lfc_cutoff_volcano ~ "Up",
-          padj < input$padj_cutoff_volcano & log2FoldChange < -input$lfc_cutoff_volcano ~ "Down",
-          TRUE ~ "NS"
-        )
-      )
 
-    # Get gene names for hover
-    if ("gene_name" %in% colnames(SummarizedExperiment::rowData(rv$se))) {
-      gene_lookup <- stats::setNames(SummarizedExperiment::rowData(rv$se)$gene_name, rownames(rv$se))
-      volcano_df$gene_name <- gene_lookup[volcano_df$gene_id]
-    } else {
-      volcano_df$gene_name <- volcano_df$gene_id
-    }
-
-    # Parse highlighted genes
-    highlight_list <- c()
-    if (!is.null(input$highlight_genes) && nchar(trimws(input$highlight_genes)) > 0) {
-      # Split by newlines and commas, trim whitespace
-      highlight_list <- input$highlight_genes %>%
-        strsplit("[\n,]") %>%
-        unlist() %>%
-        trimws() %>%
-        .[nchar(.) > 0]
-    }
-
-    # Mark highlighted genes
-    volcano_df <- volcano_df %>%
-      dplyr::mutate(
-        highlighted = gene_id %in% highlight_list | gene_name %in% highlight_list,
-        display_category = dplyr::case_when(
-          highlighted ~ "Highlighted",
-          sig == "Up" ~ "Up",
-          sig == "Down" ~ "Down",
-          TRUE ~ "NS"
-        )
-      )
-
-    # Identify top genes to label (excluding highlighted genes since they'll be labeled anyway)
-    genes_to_label <- data.frame()
-    if (input$label_top && input$n_labels > 0) {
-      top_genes <- volcano_df %>%
-        dplyr::filter(sig != "NS" & !highlighted) %>%
-        dplyr::arrange(padj) %>%
-        utils::head(input$n_labels)
-      genes_to_label <- rbind(genes_to_label, top_genes)
-    }
-
-    # Always label highlighted genes
-    if (length(highlight_list) > 0) {
-      highlighted_genes <- volcano_df %>%
-        dplyr::filter(highlighted)
-      genes_to_label <- rbind(genes_to_label, highlighted_genes)
-    }
-
-    # Color scheme - highlighted genes in bright yellow/gold
-
-    # Reorder so highlighted genes are plotted on top
-    volcano_df <- volcano_df %>%
-      dplyr::arrange(highlighted)
-
-    # Create plot
-    p <- ggplot2::ggplot(volcano_df, ggplot2::aes(x = log2FoldChange, y = -log10(padj),
-                                color = display_category, text = paste("log2 FC:", round(log2FoldChange, 2), "\nGene:", gene_name, "\nadjusted p-value:", format(padj, digits=4)))) +
-      ggplot2::geom_point(ggplot2::aes(size = highlighted, alpha = ifelse(highlighted, 1, 0.6))) +
-      ggplot2::scale_size_manual(values = c("TRUE" = 3, "FALSE" = 1.5), guide = "none") +
-      ggplot2::scale_alpha_identity() +
-      ggplot2::scale_color_manual(values = colors_acute,
-                         name = "Category",
-                         breaks = c("Up", "Down", "Highlighted", "NS"),
-                         labels = c("Up-regulated", "Down-regulated", "Highlighted", "Not significant")) +
-      ggplot2::geom_vline(xintercept = c(-input$lfc_cutoff_volcano, input$lfc_cutoff_volcano),
-                 linetype = "dashed", color = "grey30", linewidth = 0.5) +
-      ggplot2::geom_hline(yintercept = -log10(input$padj_cutoff_volcano),
-                 linetype = "dashed", color = "grey30", linewidth = 0.5) +
-      ggplot2::labs(
-        x = "Log2 Fold Change",
-        y = "-Log10 Adjusted P-value",
-        title = if (has_precomputed_de() && !is.null(input$de_comparison)) {
-          paste("Volcano Plot:", input$de_comparison)
-        } else {
-          "Volcano Plot"
-        }
-      ) +
-      ggplot2::theme_minimal(base_size = 14) +
-      ggplot2::theme(
-        legend.position = "right",
-        panel.grid.minor = ggplot2::element_blank()
-      )
-
-    # Add labels
-    if (nrow(top_genes) > 0) {
-      p <- p + ggplot2::geom_text(
-        data = top_genes,
-        ggplot2::aes(label = gene_name),
-        size = 5,
-        show.legend = FALSE
-      )
-    }
-
-    plotly::ggplotly(p, tooltip = c("text")) %>%
-      plotly::layout(hovermode = "closest") %>%
-      plotly::style(textposition = "right")
+    .plot_volcano(de_data,
+                  NAME = input$de_comparison,
+                  padj_CO = input$padj_cutoff_volcano,
+                  fc_CO = input$fc_cutoff_volcano,
+                  highlights = highlight_genes,
+                  COLS = colors_acute,
+                  LABEL_TOP = input$label_top,
+                  TOPN = input$n_labels)
+    # # Prepare data
+    # volcano_df <- de_data %>%
+    #   dplyr::filter(!is.na(padj) & !is.na(log2FoldChange) & !is.infinite(log2FoldChange)) %>%
+    #   dplyr::mutate(
+    #     neg_log10_padj = -log10(padj),
+    #     sig = dplyr::case_when(
+    #       padj < input$padj_cutoff_volcano & log2FoldChange > input$lfc_cutoff_volcano ~ "Up",
+    #       padj < input$padj_cutoff_volcano & log2FoldChange < -input$lfc_cutoff_volcano ~ "Down",
+    #       TRUE ~ "NS"
+    #     )
+    #   )
+    #
+    # # Get gene names for hover
+    # if ("gene_name" %in% colnames(SummarizedExperiment::rowData(rv$se))) {
+    #   gene_lookup <- stats::setNames(SummarizedExperiment::rowData(rv$se)$gene_name, rownames(rv$se))
+    #   volcano_df$gene_name <- gene_lookup[volcano_df$gene_id]
+    # } else {
+    #   volcano_df$gene_name <- volcano_df$gene_id
+    # }
+    #
+    # # Parse highlighted genes
+    # highlight_list <- c()
+    # if (!is.null(input$highlight_genes) && nchar(trimws(input$highlight_genes)) > 0) {
+    #   # Split by newlines and commas, trim whitespace
+    #   highlight_list <- input$highlight_genes %>%
+    #     strsplit("[\n,]") %>%
+    #     unlist() %>%
+    #     trimws() %>%
+    #     .[nchar(.) > 0]
+    # }
+    #
+    # # Mark highlighted genes
+    # volcano_df <- volcano_df %>%
+    #   dplyr::mutate(
+    #     highlighted = gene_id %in% highlight_list | gene_name %in% highlight_list,
+    #     display_category = dplyr::case_when(
+    #       highlighted ~ "Highlighted",
+    #       sig == "Up" ~ "Up",
+    #       sig == "Down" ~ "Down",
+    #       TRUE ~ "NS"
+    #     )
+    #   )
+    #
+    # # Identify top genes to label (excluding highlighted genes since they'll be labeled anyway)
+    # genes_to_label <- data.frame()
+    # if (input$label_top && input$n_labels > 0) {
+    #   top_genes <- volcano_df %>%
+    #     dplyr::filter(sig != "NS" & !highlighted) %>%
+    #     dplyr::arrange(padj) %>%
+    #     utils::head(input$n_labels)
+    #   genes_to_label <- rbind(genes_to_label, top_genes)
+    # }
+    #
+    # # Always label highlighted genes
+    # if (length(highlight_list) > 0) {
+    #   highlighted_genes <- volcano_df %>%
+    #     dplyr::filter(highlighted)
+    #   genes_to_label <- rbind(genes_to_label, highlighted_genes)
+    # }
+    #
+    # # Color scheme - highlighted genes in bright yellow/gold
+    #
+    # # Reorder so highlighted genes are plotted on top
+    # volcano_df <- volcano_df %>%
+    #   dplyr::arrange(highlighted)
+    #
+    # # Create plot
+    # p <- ggplot2::ggplot(volcano_df, ggplot2::aes(x = log2FoldChange, y = -log10(padj),
+    #                             color = display_category, text = paste("log2 FC:", round(log2FoldChange, 2), "\nGene:", gene_name, "\nadjusted p-value:", format(padj, digits=4)))) +
+    #   ggplot2::geom_point(ggplot2::aes(size = highlighted, alpha = ifelse(highlighted, 1, 0.6))) +
+    #   ggplot2::scale_size_manual(values = c("TRUE" = 3, "FALSE" = 1.5), guide = "none") +
+    #   ggplot2::scale_alpha_identity() +
+    #   ggplot2::scale_color_manual(values = colors_acute,
+    #                      name = "Category",
+    #                      breaks = c("Up", "Down", "Highlighted", "NS"),
+    #                      labels = c("Up-regulated", "Down-regulated", "Highlighted", "Not significant")) +
+    #   ggplot2::geom_vline(xintercept = c(-input$lfc_cutoff_volcano, input$lfc_cutoff_volcano),
+    #              linetype = "dashed", color = "grey30", linewidth = 0.5) +
+    #   ggplot2::geom_hline(yintercept = -log10(input$padj_cutoff_volcano),
+    #              linetype = "dashed", color = "grey30", linewidth = 0.5) +
+    #   ggplot2::labs(
+    #     x = "Log2 Fold Change",
+    #     y = "-Log10 Adjusted P-value",
+    #     title = if (has_precomputed_de() && !is.null(input$de_comparison)) {
+    #       paste("Volcano Plot:", input$de_comparison)
+    #     } else {
+    #       "Volcano Plot"
+    #     }
+    #   ) +
+    #   ggplot2::theme_minimal(base_size = 14) +
+    #   ggplot2::theme(
+    #     legend.position = "right",
+    #     panel.grid.minor = ggplot2::element_blank()
+    #   )
+    #
+    # # Add labels
+    # if (nrow(top_genes) > 0) {
+    #   p <- p + ggplot2::geom_text(
+    #     data = top_genes,
+    #     ggplot2::aes(label = gene_name),
+    #     size = 5,
+    #     show.legend = FALSE
+    #   )
+    # }
+    #
+    # plotly::ggplotly(p, tooltip = c("text")) %>%
+    #   plotly::layout(hovermode = "closest") %>%
+    #   plotly::style(textposition = "right")
   })
   output$volcano_summary <- shiny::renderPrint({
     de_data <- current_de_results()
@@ -853,70 +849,14 @@ server <- function(input, output, session) {
     plots <- purrr::imap(current_fes, function(enrich, name) {
 
       id <- paste0("e_plot_", name)
-      DIR <- ifelse(stringr::str_detect(name, "up") | stringr::str_detect(name, "UP"),
-                    "Up", "Down")
-      plotly::plotlyOutput(outputId = id, width = "700px")
+      # plotly::plotlyOutput(outputId = id, width = "700px")
 
       output[[id]] <- plotly::renderPlotly({
-        .plot_fe(enrich,
-                 name,
-                 input$padj_cutoff_enrichment,
-                 input$n_terms_enrichment,
-                 colors_acute)
-
-        # if(stringr::str_detect(name, "[Gg][Oo]")){
-        #   go_df <- fe_data %>%
-        #     dplyr::filter(p.adjust < input$padj_cutoff_enrichment) %>%
-        #     dplyr::slice_max(FoldEnrichment, n = input$n_terms_enrichment) %>%
-        #     dplyr::mutate(Description = forcats::fct_reorder(Description, FoldEnrichment),
-        #                   dir = DIR)
-        #   p2 <- ggplot2::ggplot(go_df, ggplot2::aes(FoldEnrichment,
-        #                                             Description, text = stringr::str_wrap(stringr::str_replace_all(geneID, "\\/", ", "),
-        #                                                                                   width = 60)))+
-        #     ggplot2::geom_col(ggplot2::aes(fill = dir))+
-        #     ggplot2::scale_y_discrete(labels = \(x) stringr::str_wrap(x, width = 60))+
-        #     ggplot2::scale_fill_manual(values = colors_acute)+
-        #     ggplot2::theme_light(base_size = 14)+
-        #     ggplot2::labs(x = "Fold Enrichment over Background",
-        #                   title = if (DIR == "Up") {
-        #                     paste("Top", input$n_terms_enrichment, "upregulated GO Terms")
-        #                   }else {
-        #                     paste("Top", input$n_terms_enrichment, "downregulated GO Terms")
-        #                   })+
-        #     ggplot2::theme(axis.title.y = ggplot2::element_blank(), legend.position = "none")
-        #
-        #   plotly::ggplotly(p2, tooltip = c("text")) %>%
-        #     plotly::layout(hovermode = "closest") %>%
-        #     plotly::style(textposition = "right")
-        # }else if(stringr::str_detect(name, "gsea")){
-        #   gsea_df <- fe_data %>%
-        #     dplyr::filter(p.adjust < input$padj_cutoff_enrichment) %>%
-        #     dplyr::group_by(sign(NES)) %>%
-        #     dplyr::slice_max(abs(NES), n = round(input$n_terms_enrichment / 2)) %>%
-        #     dplyr::ungroup() %>%
-        #     dplyr::mutate(Description = stringr::str_remove(Description, "HALLMARK_") %>%
-        #                     stringr::str_remove("REACTOME") %>%
-        #                     stringr::str_replace_all("_", " ") %>%
-        #                     forcats::fct_reorder(NES),
-        #                   dir = ifelse(NES > 0, "Up", "Down"))
-        #
-        #   p2 <- ggplot2::ggplot(gsea_df, ggplot2::aes(NES, Description))+
-        #     ggplot2::geom_col(ggplot2::aes(fill = dir))+
-        #     ggplot2::scale_y_discrete(labels = \(x) stringr::str_wrap(x, width = 60))+
-        #     ggplot2::scale_fill_manual(values = colors_acute)+
-        #     ggplot2::theme_light(base_size = 14)+
-        #     ggplot2::labs(x = "NES (Normalized Enrichment Score)",
-        #                   title = if (stringr::str_detect(name, "HALLMARK")) {
-        #                     paste("Top", input$n_terms_enrichment, "enriched hallmark gene sets")
-        #                   }else {
-        #                     paste("Top", input$n_terms_enrichment, "enriched Reactome gene sets")
-        #                   })+
-        #     ggplot2::theme(axis.title.y = ggplot2::element_blank(), legend.position = "none")
-        #
-        #   plotly::ggplotly(p2, tooltip = c("text")) %>%
-        #     plotly::layout(hovermode = "closest") %>%
-        #     plotly::style(textposition = "right")
-        # }
+        .plot_fe(FE = enrich,
+                 NAME = name,
+                 padj_CO = input$padj_cutoff_enrichment,
+                 N_terms = input$n_terms_enrichment,
+                 COLS = colors_acute)
       })
 
     }
