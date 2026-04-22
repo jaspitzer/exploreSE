@@ -858,60 +858,65 @@ server <- function(input, output, session) {
       plotly::plotlyOutput(outputId = id, width = "700px")
 
       output[[id]] <- plotly::renderPlotly({
-        fe_data <- enrich
-        if(stringr::str_detect(name, "[Gg][Oo]")){
-          go_df <- fe_data %>%
-            dplyr::filter(p.adjust < input$padj_cutoff_enrichment) %>%
-            dplyr::slice_max(FoldEnrichment, n = input$n_terms_enrichment) %>%
-            dplyr::mutate(Description = forcats::fct_reorder(Description, FoldEnrichment),
-                          dir = DIR)
-          p2 <- ggplot2::ggplot(go_df, ggplot2::aes(FoldEnrichment,
-                                  Description, text = stringr::str_wrap(stringr::str_replace_all(geneID, "\\/", ", "),
-                                                                        width = 60)))+
-            ggplot2::geom_col(ggplot2::aes(fill = dir))+
-            ggplot2::scale_y_discrete(labels = \(x) stringr::str_wrap(x, width = 60))+
-            ggplot2::scale_fill_manual(values = colors_acute)+
-            ggplot2::theme_light(base_size = 14)+
-            ggplot2::labs(x = "Fold Enrichment over Background",
-                 title = if (DIR == "Up") {
-                   paste("Top", input$n_terms_enrichment, "upregulated GO Terms")
-                 }else {
-                   paste("Top", input$n_terms_enrichment, "downregulated GO Terms")
-                 })+
-            ggplot2::theme(axis.title.y = ggplot2::element_blank(), legend.position = "none")
+        .plot_fe(enrich,
+                 name,
+                 input$padj_cutoff_enrichment,
+                 input$n_terms_enrichment,
+                 colors_acute)
 
-          plotly::ggplotly(p2, tooltip = c("text")) %>%
-            plotly::layout(hovermode = "closest") %>%
-            plotly::style(textposition = "right")
-        }else if(stringr::str_detect(name, "gsea")){
-          gsea_df <- fe_data %>%
-            dplyr::filter(p.adjust < input$padj_cutoff_enrichment) %>%
-            dplyr::group_by(sign(NES)) %>%
-            dplyr::slice_max(abs(NES), n = round(input$n_terms_enrichment / 2)) %>%
-            dplyr::ungroup() %>%
-            dplyr::mutate(Description = stringr::str_remove(Description, "HALLMARK_") %>%
-                            stringr::str_remove("REACTOME") %>%
-                            stringr::str_replace_all("_", " ") %>%
-                            forcats::fct_reorder(NES),
-                          dir = ifelse(NES > 0, "Up", "Down"))
-
-          p2 <- ggplot2::ggplot(gsea_df, ggplot2::aes(NES, Description))+
-            ggplot2::geom_col(ggplot2::aes(fill = dir))+
-            ggplot2::scale_y_discrete(labels = \(x) stringr::str_wrap(x, width = 60))+
-            ggplot2::scale_fill_manual(values = colors_acute)+
-            ggplot2::theme_light(base_size = 14)+
-            ggplot2::labs(x = "NES (Normalized Enrichment Score)",
-                 title = if (stringr::str_detect(name, "HALLMARK")) {
-                   paste("Top", input$n_terms_enrichment, "enriched hallmark gene sets")
-                 }else {
-                   paste("Top", input$n_terms_enrichment, "enriched Reactome gene sets")
-                 })+
-            ggplot2::theme(axis.title.y = ggplot2::element_blank(), legend.position = "none")
-
-          plotly::ggplotly(p2, tooltip = c("text")) %>%
-            plotly::layout(hovermode = "closest") %>%
-            plotly::style(textposition = "right")
-        }
+        # if(stringr::str_detect(name, "[Gg][Oo]")){
+        #   go_df <- fe_data %>%
+        #     dplyr::filter(p.adjust < input$padj_cutoff_enrichment) %>%
+        #     dplyr::slice_max(FoldEnrichment, n = input$n_terms_enrichment) %>%
+        #     dplyr::mutate(Description = forcats::fct_reorder(Description, FoldEnrichment),
+        #                   dir = DIR)
+        #   p2 <- ggplot2::ggplot(go_df, ggplot2::aes(FoldEnrichment,
+        #                                             Description, text = stringr::str_wrap(stringr::str_replace_all(geneID, "\\/", ", "),
+        #                                                                                   width = 60)))+
+        #     ggplot2::geom_col(ggplot2::aes(fill = dir))+
+        #     ggplot2::scale_y_discrete(labels = \(x) stringr::str_wrap(x, width = 60))+
+        #     ggplot2::scale_fill_manual(values = colors_acute)+
+        #     ggplot2::theme_light(base_size = 14)+
+        #     ggplot2::labs(x = "Fold Enrichment over Background",
+        #                   title = if (DIR == "Up") {
+        #                     paste("Top", input$n_terms_enrichment, "upregulated GO Terms")
+        #                   }else {
+        #                     paste("Top", input$n_terms_enrichment, "downregulated GO Terms")
+        #                   })+
+        #     ggplot2::theme(axis.title.y = ggplot2::element_blank(), legend.position = "none")
+        #
+        #   plotly::ggplotly(p2, tooltip = c("text")) %>%
+        #     plotly::layout(hovermode = "closest") %>%
+        #     plotly::style(textposition = "right")
+        # }else if(stringr::str_detect(name, "gsea")){
+        #   gsea_df <- fe_data %>%
+        #     dplyr::filter(p.adjust < input$padj_cutoff_enrichment) %>%
+        #     dplyr::group_by(sign(NES)) %>%
+        #     dplyr::slice_max(abs(NES), n = round(input$n_terms_enrichment / 2)) %>%
+        #     dplyr::ungroup() %>%
+        #     dplyr::mutate(Description = stringr::str_remove(Description, "HALLMARK_") %>%
+        #                     stringr::str_remove("REACTOME") %>%
+        #                     stringr::str_replace_all("_", " ") %>%
+        #                     forcats::fct_reorder(NES),
+        #                   dir = ifelse(NES > 0, "Up", "Down"))
+        #
+        #   p2 <- ggplot2::ggplot(gsea_df, ggplot2::aes(NES, Description))+
+        #     ggplot2::geom_col(ggplot2::aes(fill = dir))+
+        #     ggplot2::scale_y_discrete(labels = \(x) stringr::str_wrap(x, width = 60))+
+        #     ggplot2::scale_fill_manual(values = colors_acute)+
+        #     ggplot2::theme_light(base_size = 14)+
+        #     ggplot2::labs(x = "NES (Normalized Enrichment Score)",
+        #                   title = if (stringr::str_detect(name, "HALLMARK")) {
+        #                     paste("Top", input$n_terms_enrichment, "enriched hallmark gene sets")
+        #                   }else {
+        #                     paste("Top", input$n_terms_enrichment, "enriched Reactome gene sets")
+        #                   })+
+        #     ggplot2::theme(axis.title.y = ggplot2::element_blank(), legend.position = "none")
+        #
+        #   plotly::ggplotly(p2, tooltip = c("text")) %>%
+        #     plotly::layout(hovermode = "closest") %>%
+        #     plotly::style(textposition = "right")
+        # }
       })
 
     }
