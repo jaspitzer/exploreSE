@@ -170,7 +170,7 @@
     dplyr::filter(!is.na(padj) & !is.na(log2FoldChange) & !is.infinite(log2FoldChange)) %>%
     dplyr::mutate(
 
-      highlighted = gene_id %in% highlight_list,
+      highlighted = gene_id %in% highlights,
       neg_log10_padj = -log10(padj),
       display_category = dplyr::case_when(
         highlighted ~ "Highlighted",
@@ -191,7 +191,7 @@
   }
 
   # Always label highlighted genes
-  if (length(highlight_list) > 0) {
+  if (length(highlights) > 0) {
     highlighted_genes <- volcano_df %>%
       dplyr::filter(highlighted)
     genes_to_label <- rbind(genes_to_label, highlighted_genes)
