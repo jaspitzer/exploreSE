@@ -693,11 +693,21 @@ server <- function(input, output, session) {
     colors_acute <- c("Up" = rv$up_col, "Down" = rv$dn_col, "NS" = "grey70", "Highlighted" = rv$highlight_col)
 
 
+    highlight_vec <- c()
+    if (!is.null(input$highlight_genes) && nchar(trimws(input$highlight_genes)) > 0) {
+      # Split by newlines and commas, trim whitespace
+      highlight_vec <- input$highlight_genes %>%
+        strsplit("[\n,]") %>%
+        unlist() %>%
+        trimws() %>%
+        .[nchar(.) > 0]
+    }
+
     .plot_volcano(de_data,
                   NAME = input$de_comparison,
                   padj_CO = input$padj_cutoff_volcano,
                   fc_CO = input$fc_cutoff_volcano,
-                  highlights = highlight_genes,
+                  highlights = highlight_vec,
                   COLS = colors_acute,
                   LABEL_TOP = input$label_top,
                   TOPN = input$n_labels)

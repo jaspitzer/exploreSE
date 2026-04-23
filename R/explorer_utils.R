@@ -165,18 +165,6 @@
 .plot_volcano <- function(RES, NAME, padj_CO = 0.05, fc_CO = 1, highlights = NULL,
                           COLS, LABEL_TOP = T, TOPN= 5){
 
-
-  # Parse highlighted genes
-  highlight_list <- c()
-  if (!is.null(highlights) && nchar(trimws(highlights)) > 0) {
-    # Split by newlines and commas, trim whitespace
-    highlight_list <- highlights %>%
-      strsplit("[\n,]") %>%
-      unlist() %>%
-      trimws() %>%
-      .[nchar(.) > 0]
-  }
-
   # Prepare data
   volcano_df <- RES %>%
     dplyr::filter(!is.na(padj) & !is.na(log2FoldChange) & !is.infinite(log2FoldChange)) %>%
