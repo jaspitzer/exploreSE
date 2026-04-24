@@ -653,18 +653,11 @@ server <- function(input, output, session) {
     colors_acute <- c("Up" = rv$up_col, "Down" = rv$dn_col, "NS" = "grey70", "Highlighted" = rv$highlight_col)
     de_data <- current_de_results()
 
-    p <- de_data %>%
-      dplyr::filter(padj < 0.05,
-                    abs(log2FoldChange > 1)) %>%
-      dplyr::mutate(direction = ifelse(log2FoldChange > 1, "Up", "Down") %>%
-                      fct_relevel("Up")) %>%
-      dplyr::count(direction) %>%
-      ggplot2::ggplot(ggplot2::aes(direction, y = n, color = direction))+
-      ggplot2::geom_col()+
-      ggplot2::scale_fill_manual(values = colors_acute)+
-      ggplot2::geom_label(ggplot2::aes(label = n), fill = "white")
-
-    plotly::ggplotly(p)
+    .plot_des(de_data,
+              input$de_comparison,
+              input$padj_cutoff_volcano,
+              input$lfc_cutoff_volcano,
+              colors_acute)
   })
 
   output$download_expr <- shiny::downloadHandler(

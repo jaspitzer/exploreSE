@@ -49,6 +49,24 @@
 }
 
 
+.plot_des <- function(RES, NAME, padj_CO = 0.05, fc_CO = 1, COLS = c("darkred", "darkblue")){
+  p <- RES %>%
+    dplyr::filter(padj < padj_CO,
+                  abs(fc_CO > 1)) %>%
+    dplyr::mutate(direction = ifelse(log2FoldChange > fc_CO, "Up", "Down") %>%
+                    fct_relevel("Up")) %>%
+    dplyr::count(direction) %>%
+    ggplot2::ggplot(ggplot2::aes(direction, y = n, color = direction))+
+    ggplot2::geom_col()+
+    ggplot2::scale_fill_manual(values = COLS)+
+    ggplot2::geom_label(ggplot2::aes(label = n), fill = "white")+
+    ggplot2::labs(title = paste("DE genes in", NAME))
+
+  p_p <- plotly::ggplotly(p)
+
+  return(p_p)
+}
+
 .plot_fe <- function(FE, NAME = "up_go", padj_CO = 0.05, N_terms = 5, COLS = c("Up" = "darkred", "Down" = "blue")){
 
 
