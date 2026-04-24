@@ -7,7 +7,7 @@ ui <- shiny::fluidPage(
       width = 3,
       shiny::h4("Data Input"),
       shiny::fileInput("se_file", "Upload SummarizedExperiment (.rds)",
-                accept = ".rds"),
+                       accept = ".rds"),
       shiny::checkboxInput("use_demo", "Use Demo Data", value = TRUE),
       shiny::hr(),
 
@@ -15,7 +15,7 @@ ui <- shiny::fluidPage(
         condition = "output.data_loaded",
         shiny::h4("Analysis Options"),
         shiny::numericInput("top_genes", "Top variable genes for PCA:",
-                     value = 500, min = 100, max = 5000, step = 100),
+                            value = 500, min = 100, max = 5000, step = 100),
         shiny::hr(),
 
         shiny::h5("DE Analysis"),
@@ -55,26 +55,26 @@ ui <- shiny::fluidPage(
                         shiny::fluidRow(
                           shiny::column(3,
                                         shiny::checkboxGroupInput("groups_to_show", "Include levels:")
-                   ),
-                   shiny::column(3,
-                                 shinyWidgets::pickerInput("gene_id", "Select Gene:",
-                                      choices = NULL,
-                                      options = list(
-                                        `live-search` = TRUE,
-                                        `live-search-placeholder` = "Search genes...",
-                                        size = 10
-                                      )),
-                                 shiny::selectInput("plot_type", "Plot Type:",
-                                      choices = c("Boxplot" = "box", "Violin" = "violin"))),
-                   shiny::column(3,
-                                 shiny::selectInput("color_var_2", "Color/Group by:", choices = NULL),
-                   )
-                 ),
-                 plotly::plotlyOutput("expr_plot", height = "500px"),
-                 shiny::hr(),
-                 shiny::h4("Expression Values"),
-                 DT::DTOutput("expr_table"),
-                 shiny::downloadButton("download_expr", "Download Expression Table")
+                          ),
+                          shiny::column(3,
+                                        shinyWidgets::pickerInput("gene_id", "Select Gene:",
+                                                                  choices = NULL,
+                                                                  options = list(
+                                                                    `live-search` = TRUE,
+                                                                    `live-search-placeholder` = "Search genes...",
+                                                                    size = 10
+                                                                  )),
+                                        shiny::selectInput("plot_type", "Plot Type:",
+                                                           choices = c("Boxplot" = "box", "Violin" = "violin"))),
+                          shiny::column(3,
+                                        shiny::selectInput("color_var_2", "Color/Group by:", choices = NULL),
+                          )
+                        ),
+                        plotly::plotlyOutput("expr_plot", height = "500px"),
+                        shiny::hr(),
+                        shiny::h4("Expression Values"),
+                        DT::DTOutput("expr_table"),
+                        shiny::downloadButton("download_expr", "Download Expression Table")
         ),
 
         shiny::tabPanel("DE Results",
@@ -82,15 +82,15 @@ ui <- shiny::fluidPage(
                         shiny::uiOutput("de_status_message"),
                         shiny::fluidRow(
 
-                 ),
-                 shiny::conditionalPanel(
-                   condition = "!output.has_precomputed_de",
-                   shiny::actionButton("run_de", "Run Basic DE Analysis",
-                                class = "btn-primary")
-                 ),
-                 shiny::hr(),
-                 DT::DTOutput("de_table"),
-                 shiny::downloadButton("download_de", "Download DE Table")
+                        ),
+                        shiny::conditionalPanel(
+                          condition = "!output.has_precomputed_de",
+                          shiny::actionButton("run_de", "Run Basic DE Analysis",
+                                              class = "btn-primary")
+                        ),
+                        shiny::hr(),
+                        DT::DTOutput("de_table"),
+                        shiny::downloadButton("download_de", "Download DE Table")
         ),
 
         shiny::tabPanel("Volcano Plot",
@@ -98,38 +98,38 @@ ui <- shiny::fluidPage(
                         shiny::fluidRow(
                           shiny::column(3,
                                         shiny::numericInput("padj_cutoff_volcano", "Adjusted p-value cutoff:",
-                                       value = 0.05, min = 0, max = 1, step = 0.01)
-                   ),
-                   shiny::column(3,
-                                 shiny::numericInput("lfc_cutoff_volcano", "Log2 Fold Change cutoff:",
-                                       value = 1, min = 0, max = 10, step = 0.5)
-                   ),
-                   shiny::column(3,
-                                 shiny::checkboxInput("label_top", "Label top genes", value = TRUE),
-                                 shiny::numericInput("n_labels", "Number to label:",
-                                       value = 10, min = 0, max = 50, step = 5)
-                   ),
-                   shiny::column(3,
-                                 colourpicker::colourInput("up_col_1", "Color for Upregulated", "#d62728"),
-                                 colourpicker::colourInput("dn_col_1", "Color for Downregulated", "#1f77b4"),
-                                 colourpicker::colourInput("high_col_1", "Color for Highlights", "#FFD700"))
-                 ),
-                 shiny::fluidRow(
-                   shiny::column(12,
-                          shiny::textAreaInput("highlight_genes",
-                                        "Highlight specific genes (one per line or comma-separated):",
-                                        value = "",
-                                        placeholder = "GENE1, GENE2, GENE3\nor\nGENE1\nGENE2\nGENE3",
-                                        rows = 3,
-                                        width = "100%"),
-                          shiny::helpText("Enter gene IDs or gene names to highlight in yellow on the plot.")
-                   )
-                 ),
-                 shiny::hr(),
-                 plotly::plotlyOutput("volcano_plot", height = "700px"),
-                 shiny::hr(),
-                 shiny::h4("Summary Statistics"),
-                 shiny::verbatimTextOutput("volcano_summary")
+                                                            value = 0.05, min = 0, max = 1, step = 0.01)
+                          ),
+                          shiny::column(3,
+                                        shiny::numericInput("lfc_cutoff_volcano", "Log2 Fold Change cutoff:",
+                                                            value = 1, min = 0, max = 10, step = 0.5)
+                          ),
+                          shiny::column(3,
+                                        shiny::checkboxInput("label_top", "Label top genes", value = TRUE),
+                                        shiny::numericInput("n_labels", "Number to label:",
+                                                            value = 10, min = 0, max = 50, step = 5)
+                          ),
+                          shiny::column(3,
+                                        colourpicker::colourInput("up_col_1", "Color for Upregulated", "#d62728"),
+                                        colourpicker::colourInput("dn_col_1", "Color for Downregulated", "#1f77b4"),
+                                        colourpicker::colourInput("high_col_1", "Color for Highlights", "#FFD700"))
+                        ),
+                        shiny::fluidRow(
+                          shiny::column(12,
+                                        shiny::textAreaInput("highlight_genes",
+                                                             "Highlight specific genes (one per line or comma-separated):",
+                                                             value = "",
+                                                             placeholder = "GENE1, GENE2, GENE3\nor\nGENE1\nGENE2\nGENE3",
+                                                             rows = 3,
+                                                             width = "100%"),
+                                        shiny::helpText("Enter gene IDs or gene names to highlight in yellow on the plot.")
+                          )
+                        ),
+                        shiny::hr(),
+                        plotly::plotlyOutput("volcano_plot", height = "700px"),
+                        shiny::hr(),
+                        shiny::h4("Summary Statistics"),
+                        shiny::verbatimTextOutput("volcano_summary")
         ),
 
         shiny::tabPanel("Enrichment Results",
@@ -137,20 +137,20 @@ ui <- shiny::fluidPage(
                         shiny::fluidRow(
                           shiny::column(3,
                                         shiny::numericInput("padj_cutoff_enrichment", "Adjusted p-value cutoff:",
-                                       value = 0.05, min = 0, max = 1, step = 0.01)
-                   ),
-                   shiny::column(3,
-                                 shiny::numericInput("n_terms_enrichment", "Number of top terms to show:",
-                                       value = 10, min = 3, max = 20, step = 1)
-                   ),
-                   shiny::column(3,
-                                 colourpicker::colourInput("up_col_2", "Color for Upregulated", "#d62728"),
-                                 colourpicker::colourInput("dn_col_2", "Color for Downregulated", "#1f77b4"),
-                                 colourpicker::colourInput("high_col_2", "Color for Highlights", "#FFD700"))
-                 ),
-                 shiny::uiOutput("fe_status_message"),
-                 shiny::hr(),
-                 shiny::uiOutput("enrichment_plots", width = "700px")
+                                                            value = 0.05, min = 0, max = 1, step = 0.01)
+                          ),
+                          shiny::column(3,
+                                        shiny::numericInput("n_terms_enrichment", "Number of top terms to show:",
+                                                            value = 10, min = 3, max = 20, step = 1)
+                          ),
+                          shiny::column(3,
+                                        colourpicker::colourInput("up_col_2", "Color for Upregulated", "#d62728"),
+                                        colourpicker::colourInput("dn_col_2", "Color for Downregulated", "#1f77b4"),
+                                        colourpicker::colourInput("high_col_2", "Color for Highlights", "#FFD700"))
+                        ),
+                        shiny::uiOutput("fe_status_message"),
+                        shiny::hr(),
+                        shiny::uiOutput("enrichment_plots", width = "700px")
         )
       )
     )
@@ -217,8 +217,8 @@ server <- function(input, output, session) {
 
     if(!is.null(rv$se)){
       shiny::updateCheckboxGroupInput(session, "groups_to_show",
-                               choices = levels(SummarizedExperiment::colData(rv$se)[[rv$color_var]]),
-                               selected = levels(SummarizedExperiment::colData(rv$se)[[rv$color_var]]))
+                                      choices = levels(SummarizedExperiment::colData(rv$se)[[rv$color_var]]),
+                                      selected = levels(SummarizedExperiment::colData(rv$se)[[rv$color_var]]))
     }
   })
 
@@ -317,11 +317,11 @@ server <- function(input, output, session) {
     }
 
     shiny::updateSelectInput(session, "color_var_1",
-                      choices = col_vars,
-                      selected = default_var)
+                             choices = col_vars,
+                             selected = default_var)
     shiny::updateSelectInput(session, "color_var_2",
-                      choices = col_vars,
-                      selected = default_var)
+                             choices = col_vars,
+                             selected = default_var)
 
 
     # Update gene choices with searchable picker
@@ -330,15 +330,15 @@ server <- function(input, output, session) {
       names(gene_choices) <- SummarizedExperiment::rowData(rv$se)$gene_name
     }
     shinyWidgets::updatePickerInput(session, "gene_id",
-                      choices = gene_choices,
-                      selected = gene_choices[1])
+                                    choices = gene_choices,
+                                    selected = gene_choices[1])
 
     # Update DE comparison choices if precomputed results exist
     if (has_precomputed_de()) {
       comparisons <- de_comparisons()
       shiny::updateSelectInput(session, "de_comparison",
-                        choices = comparisons,
-                        selected = comparisons[1])
+                               choices = comparisons,
+                               selected = comparisons[1])
       shiny::showNotification(
         paste("Found", length(comparisons), "precomputed DE comparison(s)"),
         type = "message"
@@ -349,14 +349,14 @@ server <- function(input, output, session) {
   shiny::observeEvent(input$color_var_1, {
     rv$color_var <- input$color_var_1
     shiny::updateCheckboxGroupInput(session, "groups_to_show",
-                             choices = levels(as.factor(SummarizedExperiment::colData(rv$se)[[input$color_var_1]])),
-                             selected = levels(as.factor(SummarizedExperiment::colData(rv$se)[[input$color_var_1]])))
+                                    choices = levels(as.factor(SummarizedExperiment::colData(rv$se)[[input$color_var_1]])),
+                                    selected = levels(as.factor(SummarizedExperiment::colData(rv$se)[[input$color_var_1]])))
   })
   shiny::observeEvent(input$color_var_2, {
     rv$color_var <- input$color_var_2
     shiny::updateCheckboxGroupInput(session, "groups_to_show",
-                             choices = levels(as.factor(SummarizedExperiment::colData(rv$se)[[input$color_var_2]])),
-                             selected = levels(as.factor(SummarizedExperiment::colData(rv$se)[[input$color_var_2]])))
+                                    choices = levels(as.factor(SummarizedExperiment::colData(rv$se)[[input$color_var_2]])),
+                                    selected = levels(as.factor(SummarizedExperiment::colData(rv$se)[[input$color_var_2]])))
   })
 
 
@@ -636,7 +636,7 @@ server <- function(input, output, session) {
     de_data <- current_de_results()
     de_data <- dplyr::select(de_data, tidyselect::any_of(c("gene_id", "baseMean", "log2FoldChange", "pvalue", "padj"))) %>%
       dplyr::mutate(dplyr::across(tidyselect::any_of(c("baseMean", "log2FoldChange")), \(x) round(x, 2)),
-             dplyr::across(tidyselect::any_of(c("pvalue", "padj")), \(x) round(x, 4)))
+                    dplyr::across(tidyselect::any_of(c("pvalue", "padj")), \(x) round(x, 4)))
     shiny::req(de_data)
 
     DT::datatable(
@@ -645,6 +645,26 @@ server <- function(input, output, session) {
       rownames = FALSE,
       filter = "top"
     )
+  })
+
+
+  output$de_plot <- plotly::renderPlotly({
+    shiny::req(de_data, input$padj_cutoff_volcano, input$lfc_cutoff_volcano, rv$up_col, rv$dn_col, rv$highlight_col)
+    colors_acute <- c("Up" = rv$up_col, "Down" = rv$dn_col, "NS" = "grey70", "Highlighted" = rv$highlight_col)
+    de_data <- current_de_results()
+
+    p <- de_data %>%
+      dplyr::filter(padj < 0.05,
+                    abs(log2FoldChange > 1)) %>%
+      dplyr::mutate(direction = ifelse(log2FoldChange > 1, "Up", "Down") %>%
+                      fct_relevel("Up")) %>%
+      dplyr::count(direction) %>%
+      ggplot2::ggplot(ggplot2::aes(direction, y = n, color = direction))+
+      ggplot2::geom_col()+
+      ggplot2::scale_fill_manual(values = colors_acute)+
+      ggplot2::geom_label(ggplot2::aes(label = n), fill = "white")
+
+    plotly::ggplotly(p)
   })
 
   output$download_expr <- shiny::downloadHandler(
