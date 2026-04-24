@@ -89,6 +89,8 @@ ui <- shiny::fluidPage(
                                               class = "btn-primary")
                         ),
                         shiny::hr(),
+                        plotly::plotlyOutput("volcano_plot", height = "700px"),
+                        shiny::hr(),
                         DT::DTOutput("de_table"),
                         shiny::downloadButton("download_de", "Download DE Table")
         ),
