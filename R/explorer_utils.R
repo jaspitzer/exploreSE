@@ -37,7 +37,7 @@
 .de_result <- function(SE, NAME){
   if(methods::is(SE, "DeeDeeExperiment")){
     res <- DeeDeeExperiment::getDEA(SE, NAME, type = "data.frame") %>%
-      dplyr::rename_with(~\(x) stringr::str_remove(x, paste0(NAME, "_")))
+      dplyr::rename_with(.fn = \(x) stringr::str_remove(x, paste0(NAME, "_")))
   }else{
     res <- S4Vectors::metadata(SE)$de_results[[NAME]]
   }
@@ -52,19 +52,20 @@
 .plot_des <- function(RES, NAME, padj_CO = 0.05, fc_CO = 1, COLS = c("darkred", "darkblue")){
   p <- RES %>%
     dplyr::filter(padj < padj_CO,
-                  abs(fc_CO > 1)) %>%
-    dplyr::mutate(direction = ifelse(log2FoldChange > fc_CO, "Up", "Down") %>%
-                    fct_relevel("Up")) %>%
+                  abs(fc_CO) >= 1) %>%
+    dplyr::mutate(direction = ifelse(log2FoldChange > fc_CO, "Up", "Down")) %>%
     dplyr::count(direction) %>%
-    ggplot2::ggplot(ggplot2::aes(direction, y = n, color = direction))+
+    ggplot2::ggplot(ggplot2::aes(direction, y = n, fill = direction))+
     ggplot2::geom_col()+
+    ggplot2::geom_label(ggplot2::aes(label = n), fill = "white", show.legend = F)+
     ggplot2::scale_fill_manual(values = COLS)+
-    ggplot2::geom_label(ggplot2::aes(label = n), fill = "white")+
-    ggplot2::labs(title = paste("DE genes in", NAME))
+    ggplot2::labs(title = paste("DE genes in", NAME),)+
+    ggplot2::theme_light(base_size = 14)+
+    ggplot2::theme(legend.position = "none")
 
-  p_p <- plotly::ggplotly(p)
+  # p_p <- plotly::ggplotly(p)
 
-  return(p_p)
+  return(p)
 }
 
 .plot_fe <- function(FE, NAME = "up_go", padj_CO = 0.05, N_terms = 5, COLS = c("Up" = "darkred", "Down" = "blue")){
@@ -182,19 +183,20 @@
 
 .plot_volcano <- function(RES, NAME, padj_CO = 0.05, fc_CO = 1, highlights = NULL,
                           COLS, LABEL_TOP = T, TOPN= 5){
-
   # Prepare data
   volcano_df <- RES %>%
     dplyr::filter(!is.na(padj) & !is.na(log2FoldChange) & !is.infinite(log2FoldChange)) %>%
     dplyr::mutate(
-
       highlighted = gene_id %in% highlights,
-      neg_log10_padj = -log10(padj),
+      sig = dplyr::case_when(
+        padj < 0.05 & log2FoldChange > 1 ~ "Up",
+        padj < 0.05 & log2FoldChange < -1 ~ "Down",
+        TRUE ~ "NS"
+      )) %>%
+    dplyr::mutate(
       display_category = dplyr::case_when(
         highlighted ~ "Highlighted",
-        padj < padj_CO & log2FoldChange > fc_CO ~ "Up",
-        padj < padj_CO & log2FoldChange < -fc_CO ~ "Down",
-        TRUE ~ "NS"
+        TRUE ~ sig
       )
     )
 
@@ -221,7 +223,7 @@
 
   # Create plot
   p <- ggplot2::ggplot(volcano_df, ggplot2::aes(x = log2FoldChange, y = -log10(padj),
-                                                color = display_category, text = paste("log2 FC:", round(log2FoldChange, 2), "\nGene:", gene_name, "\nadjusted p-value:", format(padj, digits=4)))) +
+                                                color = display_category, text = paste("log2 FC:", round(log2FoldChange, 2), "\nGene:", gene_id, "\nadjusted p-value:", format(padj, digits=4)))) +
     ggplot2::geom_point(ggplot2::aes(size = highlighted, alpha = ifelse(highlighted, 1, 0.6))) +
     ggplot2::scale_size_manual(values = c("TRUE" = 3, "FALSE" = 1.5), guide = "none") +
     ggplot2::scale_alpha_identity() +

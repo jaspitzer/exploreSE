@@ -6,4 +6,4 @@ utils::globalVariables(c("padj", "PC1", "PC2", "group", "s_a_m_p_l_e", "g_r_o_u_
                          "dds", "condition", "gs_name", "gene_symbol", "gene",
                          "name", "value", "sd", "mean_expr", "sd_group1",
                          "sd_group2", "ranking", "mean_expr_group2",
-                         "mean_expr_group1"))
+                         "mean_expr_group1", "n", "direction"))

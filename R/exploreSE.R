@@ -89,7 +89,7 @@ ui <- shiny::fluidPage(
                                               class = "btn-primary")
                         ),
                         shiny::hr(),
-                        plotly::plotlyOutput("volcano_plot", height = "700px"),
+                        shiny::plotOutput("de_plot", height = "700px"),
                         shiny::hr(),
                         DT::DTOutput("de_table"),
                         shiny::downloadButton("download_de", "Download DE Table")
@@ -650,8 +650,8 @@ server <- function(input, output, session) {
   })
 
 
-  output$de_plot <- plotly::renderPlotly({
-    shiny::req(de_data, input$padj_cutoff_volcano, input$lfc_cutoff_volcano, rv$up_col, rv$dn_col, rv$highlight_col)
+  output$de_plot <- shiny::renderPlot({
+    # shiny::req(de_data, input$padj_cutoff_volcano, input$lfc_cutoff_volcano, rv$up_col, rv$dn_col, rv$highlight_col)
     colors_acute <- c("Up" = rv$up_col, "Down" = rv$dn_col, "NS" = "grey70", "Highlighted" = rv$highlight_col)
     de_data <- current_de_results()
 
@@ -718,10 +718,10 @@ server <- function(input, output, session) {
         .[nchar(.) > 0]
     }
 
-    .plot_volcano(de_data,
+    .plot_volcano(RES = de_data,
                   NAME = input$de_comparison,
                   padj_CO = input$padj_cutoff_volcano,
-                  fc_CO = input$fc_cutoff_volcano,
+                  fc_CO = input$lfc_cutoff_volcano,
                   highlights = highlight_vec,
                   COLS = colors_acute,
                   LABEL_TOP = input$label_top,
