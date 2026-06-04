@@ -1,0 +1,80 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# exploreSE
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+The goal of exploreSE is to create and maintian a shiny app for transcriptomic results presentation. It heavily relies on the [SummarizedExperiment](https://www.bioconductor.org/packages/release/bioc/html/SummarizedExperiment.html) and [DeeDeeExperiment](https://bioconductor.org/packages//release/bioc/html/DeeDeeExperiment.html) packages on bioconductor. 
+
+## Installation
+
+You can install the development version of exploreSE from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("pak")
+pak::pak("jaspitzer/exploreSE")
+```
+
+## Example
+
+Let's say you've loaded in your data and created two separate models:
+
+```{r example}
+library(exploreSE)
+library(airway)
+library(DeeDeeExperiment)
+library(DESeq2)
+data(airway)
+```
+
+```{r}
+airway <- DESeqDataSet(airway, design = ~dex)
+airway <- DESeq(airway)
+baseline <- results(airway)
+
+airway <- DESeqDataSet(airway, design = ~dex + cell)
+airway <- DESeq(airway)
+cell_controlled <- results(airway)
+```
+
+These results can be added to the DeeDeeExperiment
+```{r}
+airway <- addDEA(DeeDeeExperiment(airway), baseline)
+airway <- addDEA(airway, cell_controlled)
+```
+
+```{r}
+airway
+```
+
+```{r}
+airway <- get.gos(obj = airway, NAME = "baseline", gene_type = "ENSEMBL")
+airway <- get.gos(obj = airway, NAME = "cell_controlled", gene_type = "ENSEMBL")
+```
+
+```{r}
+airway
+```
+
+With the enrichments added, we can now call our shiny app for exploration! (Note: this is a work in progress, I still need to figure out how to properly show this in the vignette)
+```{r}
+app <- exploreSE()
+if(interactive()){
+  shiny::runApp(app, port = 1234)
+}
+```
+

@@ -2,4 +2,6 @@
 
 export("%>%")
 export(exploreSE)
+export(get.gos)
+export(get.gsea)
 importFrom(magrittr,"%>%")

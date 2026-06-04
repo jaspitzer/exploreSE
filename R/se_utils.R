@@ -1,6 +1,18 @@
 
 
-get.gos <- function(NAME, obj = dds, species = "hs"){
+#' Title
+#'
+#' @param NAME name of the de comparison
+#' @param obj the object
+#' @param species the species hs/mm
+#' @param gene_type the type of gene identifier
+#'
+#' @returns a DeeDeeExperiment or SummarizedExperiment
+#' @export
+#'
+#' @examples
+#' TRUE
+get.gos <- function(NAME, obj = dds, species = "hs", gene_type = "SYMBOL"){
   if(species == "hs"){
     DB <- org.Hs.eg.db::org.Hs.eg.db
   }else {
@@ -20,9 +32,9 @@ get.gos <- function(NAME, obj = dds, species = "hs"){
     tibble::rownames_to_column("gene") %>%
     dplyr::filter(!is.na(padj)) %>% dplyr::pull(gene)
 
-  up_go <- clusterProfiler::enrichGO(up_genes, DB, keyType = "SYMBOL", ont = "BP", universe = universe) %>%
+  up_go <- clusterProfiler::enrichGO(up_genes, DB, keyType = gene_type, ont = "BP", universe = universe) %>%
     BiocGenerics::as.data.frame()
-  dn_go <- clusterProfiler::enrichGO(dn_genes, DB, keyType = "SYMBOL", ont = "BP", universe = universe) %>%
+  dn_go <- clusterProfiler::enrichGO(dn_genes, DB, keyType = gene_type, ont = "BP", universe = universe) %>%
     BiocGenerics::as.data.frame()
 
   if(!methods::is(obj, "DeeDeeExperiment")){
@@ -30,7 +42,7 @@ get.gos <- function(NAME, obj = dds, species = "hs"){
   }
 
   if(length(up_genes) > 0){
-    up_go <- clusterProfiler::enrichGO(up_genes, DB, keyType = "SYMBOL", ont = "BP", universe = universe)
+    up_go <- clusterProfiler::enrichGO(up_genes, DB, keyType = gene_type, ont = "BP", universe = universe)
     if(!is.null(up_go)){
       obj <- DeeDeeExperiment::addFEA(obj, up_go, NAME)
       obj <- DeeDeeExperiment::renameFEA(obj, "up_go", paste0(NAME, "_up_go"))
@@ -38,7 +50,7 @@ get.gos <- function(NAME, obj = dds, species = "hs"){
   }
 
   if(length(dn_genes) > 0){
-    dn_go <- clusterProfiler::enrichGO(dn_genes, DB, keyType = "SYMBOL", ont = "BP", universe = universe)
+    dn_go <- clusterProfiler::enrichGO(dn_genes, DB, keyType = gene_type, ont = "BP", universe = universe)
     if(!is.null(dn_go)){
       obj <- DeeDeeExperiment::addFEA(obj, dn_go, NAME)
       obj <- DeeDeeExperiment::renameFEA(obj, "dn_go", paste0(NAME, "_down_go"))
@@ -61,6 +73,20 @@ get.gos <- function(NAME, obj = dds, species = "hs"){
 
 
 
+#' Title
+#'
+#' @param NAME name of the DE comparison
+#' @param obj the SE/DeeDeeExperiemnt
+#' @param type hallmark or reactome
+#' @param conditions which conditions are compared
+#' @param species what species
+#' @param condition_var whats the variable name for this comparison
+#'
+#' @returns a DeeDeeExperiment or SummarizedExperiment
+#' @export
+#'
+#' @examples
+#' TRUE
 get.gsea <- function(NAME, obj = dds, type = "HALLMARK", conditions, species = "hs", condition_var = condition){
   if(species == "hs"){
     SPECIES <- "HS"
