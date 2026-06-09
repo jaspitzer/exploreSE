@@ -6,22 +6,35 @@ ui <- shiny::fluidPage(
     shiny::sidebarPanel(
       width = 3,
       shiny::h4("Data Input"),
-      shiny::fileInput("se_file", "Upload SummarizedExperiment (.rds)",
-                       accept = ".rds"),
+      shiny::fileInput(
+        "se_file",
+        "Upload SummarizedExperiment (.rds)",
+        accept = ".rds"
+      ),
       shiny::checkboxInput("use_demo", "Use Demo Data", value = TRUE),
       shiny::hr(),
 
       shiny::conditionalPanel(
         condition = "output.data_loaded",
         shiny::h4("Analysis Options"),
-        shiny::numericInput("top_genes", "Top variable genes for PCA:",
-                            value = 500, min = 100, max = 5000, step = 100),
+        shiny::numericInput(
+          "top_genes",
+          "Top variable genes for PCA:",
+          value = 500,
+          min = 100,
+          max = 5000,
+          step = 100
+        ),
         shiny::hr(),
 
         shiny::h5("DE Analysis"),
         shiny::conditionalPanel(
           condition = "output.has_precomputed_de",
-          shiny::selectInput("de_comparison", "Select Comparison:", choices = NULL)
+          shiny::selectInput(
+            "de_comparison",
+            "Select Comparison:",
+            choices = NULL
+          )
         ),
       ),
     ),
@@ -30,129 +43,227 @@ ui <- shiny::fluidPage(
       width = 9,
       shiny::tabsetPanel(
         id = "main_tabs",
-        shiny::tabPanel("Overview",
-                        shiny::h3("Dataset Summary"),
-                        shiny::verbatimTextOutput("data_summary"),
-                        shiny::hr(),
-                        shiny::h4("Sample Metadata"),
-                        DT::DTOutput("metadata_table")
+        shiny::tabPanel(
+          "Overview",
+          shiny::h3("Dataset Summary"),
+          shiny::verbatimTextOutput("data_summary"),
+          shiny::hr(),
+          shiny::h4("Sample Metadata"),
+          DT::DTOutput("metadata_table")
         ),
 
-        shiny::tabPanel("PCA",
-                        shiny::h3("Principal Component Analysis"),
-                        shiny::fluidRow(
-                          shiny::column(3,
-                                        shiny::selectInput("color_var_1", "Color/Group by:", choices = NULL),
-                          )
-                        ),
-                        plotly::plotlyOutput("pca_plot", height = "600px"),
-                        shiny::hr(),
-                        shiny::verbatimTextOutput("pca_variance")
+        shiny::tabPanel(
+          "PCA",
+          shiny::h3("Principal Component Analysis"),
+          shiny::fluidRow(
+            shiny::column(
+              3,
+              shiny::selectInput(
+                "color_var_1",
+                "Color/Group by:",
+                choices = NULL
+              ),
+            )
+          ),
+          plotly::plotlyOutput("pca_plot", height = "600px"),
+          shiny::hr(),
+          shiny::verbatimTextOutput("pca_variance")
         ),
 
-        shiny::tabPanel("Gene Expression",
-                        shiny::h3("Gene Expression Plot"),
-                        shiny::fluidRow(
-                          shiny::column(3,
-                                        shiny::checkboxGroupInput("groups_to_show", "Include levels:")
-                          ),
-                          shiny::column(3,
-                                        shinyWidgets::pickerInput("gene_id", "Select Gene:",
-                                                                  choices = NULL,
-                                                                  options = list(
-                                                                    `live-search` = TRUE,
-                                                                    `live-search-placeholder` = "Search genes...",
-                                                                    size = 10
-                                                                  )),
-                                        shiny::selectInput("plot_type", "Plot Type:",
-                                                           choices = c("Boxplot" = "box", "Violin" = "violin"))),
-                          shiny::column(3,
-                                        shiny::selectInput("color_var_2", "Color/Group by:", choices = NULL),
-                          )
-                        ),
-                        plotly::plotlyOutput("expr_plot", height = "500px"),
-                        shiny::hr(),
-                        shiny::h4("Expression Values"),
-                        DT::DTOutput("expr_table"),
-                        shiny::downloadButton("download_expr", "Download Expression Table")
+        shiny::tabPanel(
+          "Gene Expression",
+          shiny::h3("Gene Expression Plot"),
+          shiny::fluidRow(
+            shiny::column(
+              3,
+              shiny::checkboxGroupInput("groups_to_show", "Include levels:")
+            ),
+            shiny::column(
+              3,
+              shinyWidgets::pickerInput(
+                "gene_id",
+                "Select Gene:",
+                choices = NULL,
+                options = list(
+                  `live-search` = TRUE,
+                  `live-search-placeholder` = "Search genes...",
+                  size = 10
+                )
+              ),
+              shiny::selectInput(
+                "plot_type",
+                "Plot Type:",
+                choices = c("Boxplot" = "box", "Violin" = "violin")
+              )
+            ),
+            shiny::column(
+              3,
+              shiny::selectInput(
+                "color_var_2",
+                "Color/Group by:",
+                choices = NULL
+              ),
+            )
+          ),
+          plotly::plotlyOutput("expr_plot", height = "500px"),
+          shiny::hr(),
+          shiny::h4("Expression Values"),
+          DT::DTOutput("expr_table"),
+          shiny::downloadButton("download_expr", "Download Expression Table")
         ),
 
-        shiny::tabPanel("DE Results",
-                        shiny:: h3("Differential Expression Results"),
-                        shiny::uiOutput("de_status_message"),
-                        shiny::fluidRow(
-
-                        ),
-                        shiny::conditionalPanel(
-                          condition = "!output.has_precomputed_de",
-                          shiny::actionButton("run_de", "Run Basic DE Analysis",
-                                              class = "btn-primary")
-                        ),
-                        shiny::hr(),
-                        shiny::plotOutput("de_plot", height = "700px"),
-                        shiny::hr(),
-                        DT::DTOutput("de_table"),
-                        shiny::downloadButton("download_de", "Download DE Table")
+        shiny::tabPanel(
+          "DE Results",
+          shiny::h3("Differential Expression Results"),
+          shiny::uiOutput("de_status_message"),
+          shiny::fluidRow(),
+          shiny::conditionalPanel(
+            condition = "!output.has_precomputed_de",
+            shiny::actionButton(
+              "run_de",
+              "Run Basic DE Analysis",
+              class = "btn-primary"
+            )
+          ),
+          shiny::hr(),
+          shiny::plotOutput("de_plot", height = "700px"),
+          shiny::hr(),
+          DT::DTOutput("de_table"),
+          shiny::downloadButton("download_de", "Download DE Table")
         ),
 
-        shiny::tabPanel("Volcano Plot",
-                        shiny::h3("Volcano Plot"),
-                        shiny::fluidRow(
-                          shiny::column(3,
-                                        shiny::numericInput("padj_cutoff_volcano", "Adjusted p-value cutoff:",
-                                                            value = 0.05, min = 0, max = 1, step = 0.01)
-                          ),
-                          shiny::column(3,
-                                        shiny::numericInput("lfc_cutoff_volcano", "Log2 Fold Change cutoff:",
-                                                            value = 1, min = 0, max = 10, step = 0.5)
-                          ),
-                          shiny::column(3,
-                                        shiny::checkboxInput("label_top", "Label top genes", value = TRUE),
-                                        shiny::numericInput("n_labels", "Number to label:",
-                                                            value = 10, min = 0, max = 50, step = 5)
-                          ),
-                          shiny::column(3,
-                                        colourpicker::colourInput("up_col_1", "Color for Upregulated", "#d62728"),
-                                        colourpicker::colourInput("dn_col_1", "Color for Downregulated", "#1f77b4"),
-                                        colourpicker::colourInput("high_col_1", "Color for Highlights", "#FFD700"))
-                        ),
-                        shiny::fluidRow(
-                          shiny::column(12,
-                                        shiny::textAreaInput("highlight_genes",
-                                                             "Highlight specific genes (one per line or comma-separated):",
-                                                             value = "",
-                                                             placeholder = "GENE1, GENE2, GENE3\nor\nGENE1\nGENE2\nGENE3",
-                                                             rows = 3,
-                                                             width = "100%"),
-                                        shiny::helpText("Enter gene IDs or gene names to highlight in yellow on the plot.")
-                          )
-                        ),
-                        shiny::hr(),
-                        plotly::plotlyOutput("volcano_plot", height = "700px"),
-                        shiny::hr(),
-                        shiny::h4("Summary Statistics"),
-                        shiny::verbatimTextOutput("volcano_summary")
+        shiny::tabPanel(
+          "Volcano Plot",
+          shiny::h3("Volcano Plot"),
+          shiny::fluidRow(
+            shiny::column(
+              3,
+              shiny::numericInput(
+                "padj_cutoff_volcano",
+                "Adjusted p-value cutoff:",
+                value = 0.05,
+                min = 0,
+                max = 1,
+                step = 0.01
+              )
+            ),
+            shiny::column(
+              3,
+              shiny::numericInput(
+                "lfc_cutoff_volcano",
+                "Log2 Fold Change cutoff:",
+                value = 1,
+                min = 0,
+                max = 10,
+                step = 0.5
+              )
+            ),
+            shiny::column(
+              3,
+              shiny::checkboxInput(
+                "label_top",
+                "Label top genes",
+                value = TRUE
+              ),
+              shiny::numericInput(
+                "n_labels",
+                "Number to label:",
+                value = 10,
+                min = 0,
+                max = 50,
+                step = 5
+              )
+            ),
+            shiny::column(
+              3,
+              colourpicker::colourInput(
+                "up_col_1",
+                "Color for Upregulated",
+                "#d62728"
+              ),
+              colourpicker::colourInput(
+                "dn_col_1",
+                "Color for Downregulated",
+                "#1f77b4"
+              ),
+              colourpicker::colourInput(
+                "high_col_1",
+                "Color for Highlights",
+                "#FFD700"
+              )
+            )
+          ),
+          shiny::fluidRow(
+            shiny::column(
+              12,
+              shiny::textAreaInput(
+                "highlight_genes",
+                "Highlight specific genes (one per line or comma-separated):",
+                value = "",
+                placeholder = "GENE1, GENE2, GENE3\nor\nGENE1\nGENE2\nGENE3",
+                rows = 3,
+                width = "100%"
+              ),
+              shiny::helpText(
+                "Enter gene IDs or gene names to highlight in yellow on the plot."
+              )
+            )
+          ),
+          shiny::hr(),
+          plotly::plotlyOutput("volcano_plot", height = "700px"),
+          shiny::hr(),
+          shiny::h4("Summary Statistics"),
+          shiny::verbatimTextOutput("volcano_summary")
         ),
 
-        shiny::tabPanel("Enrichment Results",
-                        shiny::h3("Enrichment Results"),
-                        shiny::fluidRow(
-                          shiny::column(3,
-                                        shiny::numericInput("padj_cutoff_enrichment", "Adjusted p-value cutoff:",
-                                                            value = 0.05, min = 0, max = 1, step = 0.01)
-                          ),
-                          shiny::column(3,
-                                        shiny::numericInput("n_terms_enrichment", "Number of top terms to show:",
-                                                            value = 10, min = 3, max = 20, step = 1)
-                          ),
-                          shiny::column(3,
-                                        colourpicker::colourInput("up_col_2", "Color for Upregulated", "#d62728"),
-                                        colourpicker::colourInput("dn_col_2", "Color for Downregulated", "#1f77b4"),
-                                        colourpicker::colourInput("high_col_2", "Color for Highlights", "#FFD700"))
-                        ),
-                        shiny::uiOutput("fe_status_message"),
-                        shiny::hr(),
-                        shiny::uiOutput("enrichment_plots", width = "700px")
+        shiny::tabPanel(
+          "Enrichment Results",
+          shiny::h3("Enrichment Results"),
+          shiny::fluidRow(
+            shiny::column(
+              3,
+              shiny::numericInput(
+                "padj_cutoff_enrichment",
+                "Adjusted p-value cutoff:",
+                value = 0.05,
+                min = 0,
+                max = 1,
+                step = 0.01
+              )
+            ),
+            shiny::column(
+              3,
+              shiny::numericInput(
+                "n_terms_enrichment",
+                "Number of top terms to show:",
+                value = 10,
+                min = 3,
+                max = 20,
+                step = 1
+              )
+            ),
+            shiny::column(
+              3,
+              colourpicker::colourInput(
+                "up_col_2",
+                "Color for Upregulated",
+                "#d62728"
+              ),
+              colourpicker::colourInput(
+                "dn_col_2",
+                "Color for Downregulated",
+                "#1f77b4"
+              ),
+              colourpicker::colourInput(
+                "high_col_2",
+                "Color for Highlights",
+                "#FFD700"
+              )
+            )
+          ),
+          shiny::uiOutput("fe_status_message"),
+          shiny::hr(),
+          shiny::uiOutput("enrichment_plots", width = "700px")
         )
       )
     )
@@ -161,9 +272,8 @@ ui <- shiny::fluidPage(
 
 # Server
 server <- function(input, output, session) {
-
   # Increase upload size limit to 500MB
-  options(shiny.maxRequestSize = 500*1024^2)
+  options(shiny.maxRequestSize = 500 * 1024^2)
 
   # Reactive values
   rv <- shiny::reactiveValues(
@@ -217,10 +327,13 @@ server <- function(input, output, session) {
     shiny::updateSelectInput(session, "color_var_1", selected = rv$color_var)
     shiny::updateSelectInput(session, "color_var_2", selected = rv$color_var)
 
-    if(!is.null(rv$se)){
-      shiny::updateCheckboxGroupInput(session, "groups_to_show",
-                                      choices = levels(SummarizedExperiment::colData(rv$se)[[rv$color_var]]),
-                                      selected = levels(SummarizedExperiment::colData(rv$se)[[rv$color_var]]))
+    if (!is.null(rv$se)) {
+      shiny::updateCheckboxGroupInput(
+        session,
+        "groups_to_show",
+        choices = levels(SummarizedExperiment::colData(rv$se)[[rv$color_var]]),
+        selected = levels(SummarizedExperiment::colData(rv$se)[[rv$color_var]])
+      )
     }
   })
 
@@ -232,7 +345,7 @@ server <- function(input, output, session) {
 
     # Simulate count data
     counts <- matrix(
-      stats::rnbinom(n_genes * n_samples, mu = 100, size = 1/0.5),
+      stats::rnbinom(n_genes * n_samples, mu = 100, size = 1 / 0.5),
       nrow = n_genes
     )
     rownames(counts) <- paste0("GENE", seq_len(n_genes))
@@ -270,15 +383,30 @@ server <- function(input, output, session) {
     }
   })
 
+  set_file <- shiny::getShinyOption("set_file_name")
+  # loading in default data if present
+  shiny::observe({
+    shiny::req(set_file)
+    rv$se <- readRDS(set_file)
+    shiny::updateCheckboxInput(session, "use_demo", value = FALSE)
+    shiny::showNotification("Data loaded successfully!", type = "message")
+  })
+
   shiny::observeEvent(input$se_file, {
     shiny::req(input$se_file)
-    tryCatch({
-      rv$se <- readRDS(input$se_file$datapath)
-      shiny::updateCheckboxInput(session, "use_demo", value = FALSE)
-      shiny::showNotification("Data loaded successfully!", type = "message")
-    }, error = function(e) {
-      shiny::showNotification(paste("Error loading file:", e$message), type = "error")
-    })
+    tryCatch(
+      {
+        rv$se <- readRDS(input$se_file$datapath)
+        shiny::updateCheckboxInput(session, "use_demo", value = FALSE)
+        shiny::showNotification("Data loaded successfully!", type = "message")
+      },
+      error = function(e) {
+        shiny::showNotification(
+          paste("Error loading file:", e$message),
+          type = "error"
+        )
+      }
+    )
   })
 
   # precomputed results ---------
@@ -318,29 +446,40 @@ server <- function(input, output, session) {
       col_vars[1]
     }
 
-    shiny::updateSelectInput(session, "color_var_1",
-                             choices = col_vars,
-                             selected = default_var)
-    shiny::updateSelectInput(session, "color_var_2",
-                             choices = col_vars,
-                             selected = default_var)
-
+    shiny::updateSelectInput(
+      session,
+      "color_var_1",
+      choices = col_vars,
+      selected = default_var
+    )
+    shiny::updateSelectInput(
+      session,
+      "color_var_2",
+      choices = col_vars,
+      selected = default_var
+    )
 
     # Update gene choices with searchable picker
     gene_choices <- rownames(rv$se)
     if ("gene_name" %in% colnames(SummarizedExperiment::rowData(rv$se))) {
       names(gene_choices) <- SummarizedExperiment::rowData(rv$se)$gene_name
     }
-    shinyWidgets::updatePickerInput(session, "gene_id",
-                                    choices = gene_choices,
-                                    selected = gene_choices[1])
+    shinyWidgets::updatePickerInput(
+      session,
+      "gene_id",
+      choices = gene_choices,
+      selected = gene_choices[1]
+    )
 
     # Update DE comparison choices if precomputed results exist
     if (has_precomputed_de()) {
       comparisons <- de_comparisons()
-      shiny::updateSelectInput(session, "de_comparison",
-                               choices = comparisons,
-                               selected = comparisons[1])
+      shiny::updateSelectInput(
+        session,
+        "de_comparison",
+        choices = comparisons,
+        selected = comparisons[1]
+      )
       shiny::showNotification(
         paste("Found", length(comparisons), "precomputed DE comparison(s)"),
         type = "message"
@@ -350,17 +489,30 @@ server <- function(input, output, session) {
 
   shiny::observeEvent(input$color_var_1, {
     rv$color_var <- input$color_var_1
-    shiny::updateCheckboxGroupInput(session, "groups_to_show",
-                                    choices = levels(as.factor(SummarizedExperiment::colData(rv$se)[[input$color_var_1]])),
-                                    selected = levels(as.factor(SummarizedExperiment::colData(rv$se)[[input$color_var_1]])))
+    shiny::updateCheckboxGroupInput(
+      session,
+      "groups_to_show",
+      choices = levels(as.factor(SummarizedExperiment::colData(rv$se)[[
+        input$color_var_1
+      ]])),
+      selected = levels(as.factor(SummarizedExperiment::colData(rv$se)[[
+        input$color_var_1
+      ]]))
+    )
   })
   shiny::observeEvent(input$color_var_2, {
     rv$color_var <- input$color_var_2
-    shiny::updateCheckboxGroupInput(session, "groups_to_show",
-                                    choices = levels(as.factor(SummarizedExperiment::colData(rv$se)[[input$color_var_2]])),
-                                    selected = levels(as.factor(SummarizedExperiment::colData(rv$se)[[input$color_var_2]])))
+    shiny::updateCheckboxGroupInput(
+      session,
+      "groups_to_show",
+      choices = levels(as.factor(SummarizedExperiment::colData(rv$se)[[
+        input$color_var_2
+      ]])),
+      selected = levels(as.factor(SummarizedExperiment::colData(rv$se)[[
+        input$color_var_2
+      ]]))
+    )
   })
-
 
   # VST transformation -------
   vst_data <- shiny::reactive({
@@ -368,8 +520,11 @@ server <- function(input, output, session) {
 
     if (is.null(rv$vst_data)) {
       shiny::withProgress(message = "Transforming data...", {
-        dds <- DESeq2::DESeqDataSet(rv$se, design = ~ 1)
-        rv$vst_data <- SummarizedExperiment::assay(DESeq2::vst(dds, blind = TRUE))
+        dds <- DESeq2::DESeqDataSet(rv$se, design = ~1)
+        rv$vst_data <- SummarizedExperiment::assay(DESeq2::vst(
+          dds,
+          blind = TRUE
+        ))
       })
     }
     rv$vst_data
@@ -383,7 +538,9 @@ server <- function(input, output, session) {
 
     # Select top variable genes
     rv_genes <- matrixStats::rowVars(vst_mat)
-    select_genes <- order(rv_genes, decreasing = TRUE)[1:min(input$top_genes, nrow(vst_mat))]
+    select_genes <- order(rv_genes, decreasing = TRUE)[
+      1:min(input$top_genes, nrow(vst_mat))
+    ]
 
     # Run PCA
     pca <- stats::prcomp(t(vst_mat[select_genes, ]), scale. = FALSE)
@@ -408,29 +565,35 @@ server <- function(input, output, session) {
     shiny::req(rv$se, rv$color_var)
 
     shiny::withProgress(message = "Running DESeq2...", {
-      tryCatch({
-        # Create DESeq2 object
-        col_var <- rv$color_var
-        design_formula <- stats::as.formula(paste("~", col_var))
-        dds <- DESeq2::DESeqDataSet(rv$se, design = design_formula)
+      tryCatch(
+        {
+          # Create DESeq2 object
+          col_var <- rv$color_var
+          design_formula <- stats::as.formula(paste("~", col_var))
+          dds <- DESeq2::DESeqDataSet(rv$se, design = design_formula)
 
-        # Filter low counts
-        keep <- rowSums(BiocGenerics::counts(dds)) >= 10
-        dds <- dds[keep, ]
+          # Filter low counts
+          keep <- rowSums(BiocGenerics::counts(dds)) >= 10
+          dds <- dds[keep, ]
 
-        # Run DESeq2
-        dds <- DESeq2::DESeq(dds)
+          # Run DESeq2
+          dds <- DESeq2::DESeq(dds)
 
-        # Get results
-        res <- DESeq2::results(dds)
-        rv$de_results <- as.data.frame(res) %>%
-          tibble::rownames_to_column("gene_id") %>%
-          dplyr::arrange(padj)
+          # Get results
+          res <- DESeq2::results(dds)
+          rv$de_results <- as.data.frame(res) %>%
+            tibble::rownames_to_column("gene_id") %>%
+            dplyr::arrange(padj)
 
-        shiny::showNotification("DE analysis complete!", type = "message")
-      }, error = function(e) {
-        shiny::showNotification(paste("Error in DE analysis:", e$message), type = "error")
-      })
+          shiny::showNotification("DE analysis complete!", type = "message")
+        },
+        error = function(e) {
+          shiny::showNotification(
+            paste("Error in DE analysis:", e$message),
+            type = "error"
+          )
+        }
+      )
     })
   })
 
@@ -454,9 +617,9 @@ server <- function(input, output, session) {
   current_fe_results <- shiny::reactive({
     if (has_precomputed_fe()) {
       # Load precomputed results
-      if(methods::is(rv$se, "DeeDeeExperiment")){
+      if (methods::is(rv$se, "DeeDeeExperiment")) {
         fe_res <- .fe_result(rv$se, input$de_comparison)
-      }else{
+      } else {
         fe_res <- S4Vectors::metadata(rv$se)$fe_results[[input$de_comparison]]
       }
       return(fe_res)
@@ -486,7 +649,11 @@ server <- function(input, output, session) {
       htmltools::tagList(
         htmltools::p(
           shiny::icon("check-circle", class = "text-success"),
-          htmltools::strong(paste("Found", length(comparisons), "precomputed DE comparison(s):")),
+          htmltools::strong(paste(
+            "Found",
+            length(comparisons),
+            "precomputed DE comparison(s):"
+          )),
           htmltools::br(),
           paste(comparisons, collapse = ", ")
         )
@@ -504,7 +671,11 @@ server <- function(input, output, session) {
       htmltools::tagList(
         htmltools::p(
           shiny::icon("check-circle", class = "text-success"),
-          htmltools::strong(paste("Found", length(comparisons), "precomputed functional enrichment(s):")),
+          htmltools::strong(paste(
+            "Found",
+            length(comparisons),
+            "precomputed functional enrichment(s):"
+          )),
           htmltools::br(),
           paste(comparisons, collapse = ", ")
         )
@@ -524,12 +695,24 @@ server <- function(input, output, session) {
     cat("Dimensions:\n")
     cat("  Genes:", nrow(rv$se), "\n")
     cat("  Samples:", ncol(rv$se), "\n\n")
-    cat("Assays:", paste(names(SummarizedExperiment::assays(rv$se)), collapse = ", "), "\n\n")
+    cat(
+      "Assays:",
+      paste(names(SummarizedExperiment::assays(rv$se)), collapse = ", "),
+      "\n\n"
+    )
     cat("Sample Metadata Columns:\n")
-    cat(" ", paste(colnames(SummarizedExperiment::colData(rv$se)), collapse = ", "), "\n\n")
+    cat(
+      " ",
+      paste(colnames(SummarizedExperiment::colData(rv$se)), collapse = ", "),
+      "\n\n"
+    )
     if (ncol(SummarizedExperiment::rowData(rv$se)) > 0) {
       cat("Gene Metadata Columns:\n")
-      cat(" ", paste(colnames(SummarizedExperiment::rowData(rv$se)), collapse = ", "), "\n")
+      cat(
+        " ",
+        paste(colnames(SummarizedExperiment::rowData(rv$se)), collapse = ", "),
+        "\n"
+      )
     }
   })
 
@@ -549,7 +732,10 @@ server <- function(input, output, session) {
     df <- pca_info$data
     var <- pca_info$var
 
-    p <- ggplot2::ggplot(df, ggplot2::aes(x = PC1, y = PC2, color = group, text = sample)) +
+    p <- ggplot2::ggplot(
+      df,
+      ggplot2::aes(x = PC1, y = PC2, color = group, text = sample)
+    ) +
       ggplot2::geom_point(size = 4, alpha = 0.8) +
       ggplot2::labs(
         x = paste0("PC1 (", var[1], "%)"),
@@ -565,7 +751,10 @@ server <- function(input, output, session) {
 
   output$pca_variance <- shiny::renderPrint({
     shiny::req(rv$pca_result)
-    var_explained <- round(100 * rv$pca_result$sdev^2 / sum(rv$pca_result$sdev^2), 2)
+    var_explained <- round(
+      100 * rv$pca_result$sdev^2 / sum(rv$pca_result$sdev^2),
+      2
+    )
     cat("Variance Explained by PCs:\n")
     for (i in 1:min(10, length(var_explained))) {
       cat(sprintf("  PC%d: %.2f%%\n", i, var_explained[i]))
@@ -581,31 +770,42 @@ server <- function(input, output, session) {
     plot_df <- data.frame(
       s_a_m_p_l_e = colnames(rv$se),
       expression = counts_data,
-      group = forcats::as_factor(SummarizedExperiment::colData(rv$se)[[rv$color_var]])
+      group = forcats::as_factor(SummarizedExperiment::colData(rv$se)[[
+        rv$color_var
+      ]])
     ) %>%
       dplyr::filter(group %in% input$groups_to_show)
 
-    gene_label <- if ("gene_name" %in% colnames(SummarizedExperiment::rowData(rv$se))) {
+    gene_label <- if (
+      "gene_name" %in% colnames(SummarizedExperiment::rowData(rv$se))
+    ) {
       SummarizedExperiment::rowData(rv$se)[gene, "gene_name"]
     } else {
       gene
     }
 
-    p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = group, y = expression, fill = group, text = s_a_m_p_l_e)) +
+    p <- ggplot2::ggplot(
+      plot_df,
+      ggplot2::aes(x = group, y = expression, fill = group, text = s_a_m_p_l_e)
+    ) +
       ggplot2::labs(
         title = paste("Expression:", gene_label),
         x = rv$color_var,
         y = "Normalized Counts"
       ) +
-      ggplot2::scale_x_discrete(labels = \(x) stringr::str_wrap(stringr::str_replace_all(x, "_", " "), 10))+
+      ggplot2::scale_x_discrete(labels = \(x) {
+        stringr::str_wrap(stringr::str_replace_all(x, "_", " "), 10)
+      }) +
       ggplot2::theme_minimal(base_size = 14) +
       ggplot2::theme(legend.position = "none")
 
     if (input$plot_type == "box") {
-      p <- p + ggplot2::geom_boxplot(alpha = 0.7) +
+      p <- p +
+        ggplot2::geom_boxplot(alpha = 0.7) +
         ggplot2::geom_jitter(width = 0.2, alpha = 0.5, size = 2)
     } else {
-      p <- p + ggplot2::geom_violin(alpha = 0.7) +
+      p <- p +
+        ggplot2::geom_violin(alpha = 0.7) +
         ggplot2::geom_jitter(width = 0.1, alpha = 0.5, size = 2)
     }
 
@@ -622,7 +822,7 @@ server <- function(input, output, session) {
       Gene = input$gene_id,
       Count = SummarizedExperiment::assay(rv$se, "counts")[gene, ],
       g_r_o_u_p = SummarizedExperiment::colData(rv$se)[[rv$color_var]]
-    )%>%
+    ) %>%
       dplyr::filter(g_r_o_u_p %in% input$groups_to_show) %>%
       dplyr::select(-g_r_o_u_p)
 
@@ -636,9 +836,23 @@ server <- function(input, output, session) {
 
   output$de_table <- DT::renderDT({
     de_data <- current_de_results()
-    de_data <- dplyr::select(de_data, tidyselect::any_of(c("gene_id", "baseMean", "log2FoldChange", "pvalue", "padj"))) %>%
-      dplyr::mutate(dplyr::across(tidyselect::any_of(c("baseMean", "log2FoldChange")), \(x) round(x, 2)),
-                    dplyr::across(tidyselect::any_of(c("pvalue", "padj")), \(x) round(x, 4)))
+    de_data <- dplyr::select(
+      de_data,
+      tidyselect::any_of(c(
+        "gene_id",
+        "baseMean",
+        "log2FoldChange",
+        "pvalue",
+        "padj"
+      ))
+    ) %>%
+      dplyr::mutate(
+        dplyr::across(
+          tidyselect::any_of(c("baseMean", "log2FoldChange")),
+          \(x) round(x, 2)
+        ),
+        dplyr::across(tidyselect::any_of(c("pvalue", "padj")), \(x) round(x, 4))
+      )
     shiny::req(de_data)
 
     DT::datatable(
@@ -649,22 +863,32 @@ server <- function(input, output, session) {
     )
   })
 
-
   output$de_plot <- shiny::renderPlot({
     # shiny::req(de_data, input$padj_cutoff_volcano, input$lfc_cutoff_volcano, rv$up_col, rv$dn_col, rv$highlight_col)
-    colors_acute <- c("Up" = rv$up_col, "Down" = rv$dn_col, "NS" = "grey70", "Highlighted" = rv$highlight_col)
+    colors_acute <- c(
+      "Up" = rv$up_col,
+      "Down" = rv$dn_col,
+      "NS" = "grey70",
+      "Highlighted" = rv$highlight_col
+    )
     de_data <- current_de_results()
 
-    .plot_des(de_data,
-              input$de_comparison,
-              input$padj_cutoff_volcano,
-              input$lfc_cutoff_volcano,
-              colors_acute)
+    .plot_des(
+      de_data,
+      input$de_comparison,
+      input$padj_cutoff_volcano,
+      input$lfc_cutoff_volcano,
+      colors_acute
+    )
   })
 
   output$download_expr <- shiny::downloadHandler(
     filename = function() {
-      comparison_name <- stringr::str_replace(input$gene_id, "[^a-zA-Z0-9_-]", "_")
+      comparison_name <- stringr::str_replace(
+        input$gene_id,
+        "[^a-zA-Z0-9_-]",
+        "_"
+      )
 
       paste0(comparison_name, "_expression_data_", Sys.Date(), ".csv")
     },
@@ -678,7 +902,7 @@ server <- function(input, output, session) {
         Gene = input$gene_id,
         Count = SummarizedExperiment::assay(rv$se, "counts")[gene, ],
         g_r_o_u_p = SummarizedExperiment::colData(rv$se)[[rv$color_var]]
-      )%>%
+      ) %>%
         dplyr::filter(g_r_o_u_p %in% input$groups_to_show) %>%
         dplyr::select(-g_r_o_u_p)
       readr::write_excel_csv2(expr_data, file)
@@ -687,7 +911,9 @@ server <- function(input, output, session) {
 
   output$download_de <- shiny::downloadHandler(
     filename = function() {
-      comparison_name <- if (has_precomputed_de() && !is.null(input$de_comparison)) {
+      comparison_name <- if (
+        has_precomputed_de() && !is.null(input$de_comparison)
+      ) {
         gsub("[^a-zA-Z0-9_-]", "_", input$de_comparison)
       } else {
         "DE_results"
@@ -704,12 +930,26 @@ server <- function(input, output, session) {
   ## Volcano plot ----
   output$volcano_plot <- plotly::renderPlotly({
     de_data <- current_de_results()
-    shiny::req(de_data, input$padj_cutoff_volcano, input$lfc_cutoff_volcano, rv$up_col, rv$dn_col, rv$highlight_col)
-    colors_acute <- c("Up" = rv$up_col, "Down" = rv$dn_col, "NS" = "grey70", "Highlighted" = rv$highlight_col)
-
+    shiny::req(
+      de_data,
+      input$padj_cutoff_volcano,
+      input$lfc_cutoff_volcano,
+      rv$up_col,
+      rv$dn_col,
+      rv$highlight_col
+    )
+    colors_acute <- c(
+      "Up" = rv$up_col,
+      "Down" = rv$dn_col,
+      "NS" = "grey70",
+      "Highlighted" = rv$highlight_col
+    )
 
     highlight_vec <- c()
-    if (!is.null(input$highlight_genes) && nchar(trimws(input$highlight_genes)) > 0) {
+    if (
+      !is.null(input$highlight_genes) &&
+        nchar(trimws(input$highlight_genes)) > 0
+    ) {
       # Split by newlines and commas, trim whitespace
       highlight_vec <- input$highlight_genes %>%
         strsplit("[\n,]") %>%
@@ -718,176 +958,104 @@ server <- function(input, output, session) {
         .[nchar(.) > 0]
     }
 
-    .plot_volcano(RES = de_data,
-                  NAME = input$de_comparison,
-                  padj_CO = input$padj_cutoff_volcano,
-                  fc_CO = input$lfc_cutoff_volcano,
-                  highlights = highlight_vec,
-                  COLS = colors_acute,
-                  LABEL_TOP = input$label_top,
-                  TOPN = input$n_labels)
-    # # Prepare data
-    # volcano_df <- de_data %>%
-    #   dplyr::filter(!is.na(padj) & !is.na(log2FoldChange) & !is.infinite(log2FoldChange)) %>%
-    #   dplyr::mutate(
-    #     neg_log10_padj = -log10(padj),
-    #     sig = dplyr::case_when(
-    #       padj < input$padj_cutoff_volcano & log2FoldChange > input$lfc_cutoff_volcano ~ "Up",
-    #       padj < input$padj_cutoff_volcano & log2FoldChange < -input$lfc_cutoff_volcano ~ "Down",
-    #       TRUE ~ "NS"
-    #     )
-    #   )
-    #
-    # # Get gene names for hover
-    # if ("gene_name" %in% colnames(SummarizedExperiment::rowData(rv$se))) {
-    #   gene_lookup <- stats::setNames(SummarizedExperiment::rowData(rv$se)$gene_name, rownames(rv$se))
-    #   volcano_df$gene_name <- gene_lookup[volcano_df$gene_id]
-    # } else {
-    #   volcano_df$gene_name <- volcano_df$gene_id
-    # }
-    #
-    # # Parse highlighted genes
-    # highlight_list <- c()
-    # if (!is.null(input$highlight_genes) && nchar(trimws(input$highlight_genes)) > 0) {
-    #   # Split by newlines and commas, trim whitespace
-    #   highlight_list <- input$highlight_genes %>%
-    #     strsplit("[\n,]") %>%
-    #     unlist() %>%
-    #     trimws() %>%
-    #     .[nchar(.) > 0]
-    # }
-    #
-    # # Mark highlighted genes
-    # volcano_df <- volcano_df %>%
-    #   dplyr::mutate(
-    #     highlighted = gene_id %in% highlight_list | gene_name %in% highlight_list,
-    #     display_category = dplyr::case_when(
-    #       highlighted ~ "Highlighted",
-    #       sig == "Up" ~ "Up",
-    #       sig == "Down" ~ "Down",
-    #       TRUE ~ "NS"
-    #     )
-    #   )
-    #
-    # # Identify top genes to label (excluding highlighted genes since they'll be labeled anyway)
-    # genes_to_label <- data.frame()
-    # if (input$label_top && input$n_labels > 0) {
-    #   top_genes <- volcano_df %>%
-    #     dplyr::filter(sig != "NS" & !highlighted) %>%
-    #     dplyr::arrange(padj) %>%
-    #     utils::head(input$n_labels)
-    #   genes_to_label <- rbind(genes_to_label, top_genes)
-    # }
-    #
-    # # Always label highlighted genes
-    # if (length(highlight_list) > 0) {
-    #   highlighted_genes <- volcano_df %>%
-    #     dplyr::filter(highlighted)
-    #   genes_to_label <- rbind(genes_to_label, highlighted_genes)
-    # }
-    #
-    # # Color scheme - highlighted genes in bright yellow/gold
-    #
-    # # Reorder so highlighted genes are plotted on top
-    # volcano_df <- volcano_df %>%
-    #   dplyr::arrange(highlighted)
-    #
-    # # Create plot
-    # p <- ggplot2::ggplot(volcano_df, ggplot2::aes(x = log2FoldChange, y = -log10(padj),
-    #                             color = display_category, text = paste("log2 FC:", round(log2FoldChange, 2), "\nGene:", gene_name, "\nadjusted p-value:", format(padj, digits=4)))) +
-    #   ggplot2::geom_point(ggplot2::aes(size = highlighted, alpha = ifelse(highlighted, 1, 0.6))) +
-    #   ggplot2::scale_size_manual(values = c("TRUE" = 3, "FALSE" = 1.5), guide = "none") +
-    #   ggplot2::scale_alpha_identity() +
-    #   ggplot2::scale_color_manual(values = colors_acute,
-    #                      name = "Category",
-    #                      breaks = c("Up", "Down", "Highlighted", "NS"),
-    #                      labels = c("Up-regulated", "Down-regulated", "Highlighted", "Not significant")) +
-    #   ggplot2::geom_vline(xintercept = c(-input$lfc_cutoff_volcano, input$lfc_cutoff_volcano),
-    #              linetype = "dashed", color = "grey30", linewidth = 0.5) +
-    #   ggplot2::geom_hline(yintercept = -log10(input$padj_cutoff_volcano),
-    #              linetype = "dashed", color = "grey30", linewidth = 0.5) +
-    #   ggplot2::labs(
-    #     x = "Log2 Fold Change",
-    #     y = "-Log10 Adjusted P-value",
-    #     title = if (has_precomputed_de() && !is.null(input$de_comparison)) {
-    #       paste("Volcano Plot:", input$de_comparison)
-    #     } else {
-    #       "Volcano Plot"
-    #     }
-    #   ) +
-    #   ggplot2::theme_minimal(base_size = 14) +
-    #   ggplot2::theme(
-    #     legend.position = "right",
-    #     panel.grid.minor = ggplot2::element_blank()
-    #   )
-    #
-    # # Add labels
-    # if (nrow(top_genes) > 0) {
-    #   p <- p + ggplot2::geom_text(
-    #     data = top_genes,
-    #     ggplot2::aes(label = gene_name),
-    #     size = 5,
-    #     show.legend = FALSE
-    #   )
-    # }
-    #
-    # plotly::ggplotly(p, tooltip = c("text")) %>%
-    #   plotly::layout(hovermode = "closest") %>%
-    #   plotly::style(textposition = "right")
+    .plot_volcano(
+      RES = de_data,
+      NAME = input$de_comparison,
+      padj_CO = input$padj_cutoff_volcano,
+      fc_CO = input$lfc_cutoff_volcano,
+      highlights = highlight_vec,
+      COLS = colors_acute,
+      LABEL_TOP = input$label_top,
+      TOPN = input$n_labels
+    )
   })
   output$volcano_summary <- shiny::renderPrint({
     de_data <- current_de_results()
-    shiny::req(de_data, input$padj_cutoff_volcano, input$lfc_cutoff_volcano, rv$up_col, rv$dn_col, rv$highlight_col)
+    shiny::req(
+      de_data,
+      input$padj_cutoff_volcano,
+      input$lfc_cutoff_volcano,
+      rv$up_col,
+      rv$dn_col,
+      rv$highlight_col
+    )
 
-    colors_acute <- c("Up" = rv$up_col, "Down" = rv$dn_col, "NS" = "grey70", "Highlighted" = rv$highlight_col)
+    colors_acute <- c(
+      "Up" = rv$up_col,
+      "Down" = rv$dn_col,
+      "NS" = "grey70",
+      "Highlighted" = rv$highlight_col
+    )
     summary_df <- de_data %>%
       dplyr::filter(!is.na(padj) & !is.na(log2FoldChange)) %>%
       dplyr::summarise(
         total_genes = dplyr::n(),
         sig_genes = sum(padj < input$padj_cutoff_volcano),
-        up_regulated = sum(padj < input$padj_cutoff_volcano & log2FoldChange > input$lfc_cutoff_volcano),
-        down_regulated = sum(padj < input$padj_cutoff_volcano & log2FoldChange < -input$lfc_cutoff_volcano),
-        not_significant = sum(padj >= input$padj_cutoff_volcano |
-                                (abs(log2FoldChange) < input$lfc_cutoff_volcano & padj < input$padj_cutoff_volcano))
+        up_regulated = sum(
+          padj < input$padj_cutoff_volcano &
+            log2FoldChange > input$lfc_cutoff_volcano
+        ),
+        down_regulated = sum(
+          padj < input$padj_cutoff_volcano &
+            log2FoldChange < -input$lfc_cutoff_volcano
+        ),
+        not_significant = sum(
+          padj >= input$padj_cutoff_volcano |
+            (abs(log2FoldChange) < input$lfc_cutoff_volcano &
+              padj < input$padj_cutoff_volcano)
+        )
       )
 
     cat("Differential Expression Summary\n")
     cat("================================\n\n")
     cat(sprintf("Total genes tested: %d\n", summary_df$total_genes))
-    cat(sprintf("Significant (padj < %.3f): %d (%.1f%%)\n",
-                input$padj_cutoff_volcano,
-                summary_df$sig_genes,
-                100 * summary_df$sig_genes / summary_df$total_genes))
-    cat(sprintf("\nUp-regulated (LFC > %.2f): %d\n",
-                input$lfc_cutoff_volcano, summary_df$up_regulated))
-    cat(sprintf("Down-regulated (LFC < -%.2f): %d\n",
-                input$lfc_cutoff_volcano, summary_df$down_regulated))
+    cat(sprintf(
+      "Significant (padj < %.3f): %d (%.1f%%)\n",
+      input$padj_cutoff_volcano,
+      summary_df$sig_genes,
+      100 * summary_df$sig_genes / summary_df$total_genes
+    ))
+    cat(sprintf(
+      "\nUp-regulated (LFC > %.2f): %d\n",
+      input$lfc_cutoff_volcano,
+      summary_df$up_regulated
+    ))
+    cat(sprintf(
+      "Down-regulated (LFC < -%.2f): %d\n",
+      input$lfc_cutoff_volcano,
+      summary_df$down_regulated
+    ))
     cat(sprintf("Not significant: %d\n", summary_df$not_significant))
   })
   ## enrichment plots -------
   output$enrichment_plots <- shiny::renderUI({
     current_fes <- current_fe_results()
-    colors_acute <- c("Up" = rv$up_col, "Down" = rv$dn_col, "NS" = "grey70", "Highlighted" = rv$highlight_col)
-    shiny::req(current_fes, input$padj_cutoff_enrichment, input$n_terms_enrichment, colors_acute)
-
-
-    plots <- purrr::imap(current_fes, function(enrich, name) {
-
-      id <- paste0("e_plot_", name)
-      # plotly::plotlyOutput(outputId = id, width = "700px")
-
-      output[[id]] <- plotly::renderPlotly({
-        .plot_fe(FE = enrich,
-                 NAME = name,
-                 padj_CO = input$padj_cutoff_enrichment,
-                 N_terms = input$n_terms_enrichment,
-                 COLS = colors_acute)
-      })
-
-    }
-
+    colors_acute <- c(
+      "Up" = rv$up_col,
+      "Down" = rv$dn_col,
+      "NS" = "grey70",
+      "Highlighted" = rv$highlight_col
+    )
+    shiny::req(
+      current_fes,
+      input$padj_cutoff_enrichment,
+      input$n_terms_enrichment,
+      colors_acute
     )
 
+    plots <- purrr::imap(current_fes, function(enrich, name) {
+      id <- paste0("e_plot_", name)
+
+      output[[id]] <- plotly::renderPlotly({
+        .plot_fe(
+          FE = enrich,
+          NAME = name,
+          padj_CO = input$padj_cutoff_enrichment,
+          N_terms = input$n_terms_enrichment,
+          COLS = colors_acute
+        )
+      })
+    })
   })
 }
 
@@ -898,6 +1066,8 @@ server <- function(input, output, session) {
 #' @description
 #' this runs the explorer app
 #'
+#' @param file a string leading to a file you want loaded as a default
+#'
 #' @returns an application
 #' @export
 #'
@@ -907,6 +1077,7 @@ server <- function(input, output, session) {
 #' shiny::runApp(app, port = 1234)
 #'}
 
-exploreSE <- function(){
+exploreSE <- function(file = NULL) {
+  shiny::shinyOptions(set_file_name = file)
   shiny::shinyApp(ui, server)
 }

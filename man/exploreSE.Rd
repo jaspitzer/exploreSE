@@ -4,7 +4,10 @@
 \alias{exploreSE}
 \title{exploreSE}
 \usage{
-exploreSE()
+exploreSE(file = NULL)
+}
+\arguments{
+\item{file}{a string leading to a file you want loaded as a default}
 }
 \value{
 an application
