@@ -17,15 +17,6 @@ ui <- shiny::fluidPage(
       shiny::conditionalPanel(
         condition = "output.data_loaded",
         shiny::h4("Analysis Options"),
-        shiny::numericInput(
-          "top_genes",
-          "Top variable genes for PCA:",
-          value = 500,
-          min = 100,
-          max = 5000,
-          step = 100
-        ),
-        shiny::hr(),
 
         shiny::h5("DE Analysis"),
         shiny::conditionalPanel(
@@ -63,6 +54,15 @@ ui <- shiny::fluidPage(
                 "Color/Group by:",
                 choices = NULL
               ),
+              shiny::numericInput(
+                "top_genes",
+                "Top variable genes for PCA:",
+                value = 500,
+                min = 100,
+                max = 5000,
+                step = 100
+              ),
+              shiny::hr(),
             )
           ),
           plotly::plotlyOutput("pca_plot", height = "600px"),
@@ -338,56 +338,27 @@ server <- function(input, output, session) {
   })
 
   # Load demo data -----
-  create_demo_data <- function() {
-    set.seed(42)
-    n_genes <- 1000
-    n_samples <- 12
-
-    # Simulate count data
-    counts <- matrix(
-      stats::rnbinom(n_genes * n_samples, mu = 100, size = 1 / 0.5),
-      nrow = n_genes
-    )
-    rownames(counts) <- paste0("GENE", seq_len(n_genes))
-    colnames(counts) <- paste0("Sample", seq_len(n_samples))
-
-    # Add some differential expression
-    de_genes <- 1:100
-    counts[de_genes, 1:6] <- counts[de_genes, 1:6] * 3
-
-    # Sample metadata
-    colData <- S4Vectors::DataFrame(
-      condition = factor(rep(c("Control", "Treatment"), each = 6)),
-      batch = factor(rep(c("A", "B"), times = 6)),
-      replicate = rep(1:6, times = 2)
-    )
-    rownames(colData) <- colnames(counts)
-
-    # Gene metadata
-    rowData <- S4Vectors::DataFrame(
-      gene_id = rownames(counts),
-      gene_name = paste0("Gene_", seq_len(n_genes))
-    )
-
-    SummarizedExperiment::SummarizedExperiment(
-      assays = list(counts = counts),
-      colData = colData,
-      rowData = rowData
-    )
-  }
 
   # Load data ---------
   shiny::observe({
     if (input$use_demo) {
-      rv$se <- create_demo_data()
+      rv$se <- .create_demo_data()
     }
   })
 
   set_file <- shiny::getShinyOption("set_file_name")
+  set_object <- shiny::getShinyOption("set_object")
   # loading in default data if present
   shiny::observe({
     shiny::req(set_file)
     rv$se <- readRDS(set_file)
+    shiny::updateCheckboxInput(session, "use_demo", value = FALSE)
+    shiny::showNotification("Data loaded successfully!", type = "message")
+  })
+
+  shiny::observe({
+    shiny::req(set_object)
+    rv$se <- set_object
     shiny::updateCheckboxInput(session, "use_demo", value = FALSE)
     shiny::showNotification("Data loaded successfully!", type = "message")
   })
@@ -539,7 +510,7 @@ server <- function(input, output, session) {
     # Select top variable genes
     rv_genes <- matrixStats::rowVars(vst_mat)
     select_genes <- order(rv_genes, decreasing = TRUE)[
-      1:min(input$top_genes, nrow(vst_mat))
+      seq_len(min(input$top_genes, nrow(vst_mat)))
     ]
 
     # Run PCA
@@ -756,7 +727,7 @@ server <- function(input, output, session) {
       2
     )
     cat("Variance Explained by PCs:\n")
-    for (i in 1:min(10, length(var_explained))) {
+    for (i in seq_len(min(10, length(var_explained)))) {
       cat(sprintf("  PC%d: %.2f%%\n", i, var_explained[i]))
     }
   })
@@ -1067,6 +1038,7 @@ server <- function(input, output, session) {
 #' this runs the explorer app
 #'
 #' @param file a string leading to a file you want loaded as a default
+#' @param object a summarizedExperiment object (or DeeDeeExperiment) to load in
 #'
 #' @returns an application
 #' @export
@@ -1077,7 +1049,7 @@ server <- function(input, output, session) {
 #' shiny::runApp(app, port = 1234)
 #'}
 
-exploreSE <- function(file = NULL) {
-  shiny::shinyOptions(set_file_name = file)
+exploreSE <- function(file = NULL, object = NULL) {
+  shiny::shinyOptions(set_file_name = file, set_object = object)
   shiny::shinyApp(ui, server)
 }

@@ -1,0 +1,124 @@
+---
+title: "Introduction to exploreSE"
+author:
+- name: Jasper Spitzer
+  affiliation: Institute for Human Genetics, University Hoospital Bonn, Germany
+  email:jasspitzer135@gmail.com
+date: "`r BiocStyle::doc_date()`"
+output: BiocStyle::html_document:
+    toc: true
+    toc_depth: 2
+vignette: >
+  %\VignetteIndexEntry{Introduction to exploreSE}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction 
+exploreSE is package that provides an interactive Shiny-based user interface for exploring transcriptional data and anaylsis results stored in [summarizedExperiment](https://www.bioconductor.org/packages/release/bioc/html/tidySummarizedExperiment.html) or [DeeDeeExperiment](https://bioconductor.org/packages//release/bioc/html/DeeDeeExperiment.html) format. 
+
+Once installed, the packages can be accessed through the following bit of code:
+
+```{r}
+library(exploreSE)
+```
+
+To explore the results of differential expression analysis, we need to organise them in the structure and you will learn how to do that in this vignette. If you want to explore on your own, you can  run the following code and start exploring the example data.
+
+```{r quickstart, eval=FALSE}
+example(iSEE, ask = FALSE)
+```
+
+
+
+# Setting up the data
+For the purposes of this example, we'll be using the `airway` data [citiation]. It is part of the [airway](https://www.bioconductor.org/packages/release/data/experiment/html/airway.html) package, containing RNA-Seq data from different airway smooth muscle cell lines either untreated or treated with dexamethasone.
+
+```{r}
+library(airway)
+data(airway)
+airway
+```
+
+Out of the box, the `airway` object is `summarizedExperiment` object, containing eight samples from four cell lines. This information is available in `coldata(airway)`.
+
+```{r}
+colData(airway)
+```
+
+In this vignette, we will subset `airway` to only contain protein-coding genes. The required information is stored in its `rowData`, accessible through `rowData(airway)`.
+
+```{r}
+rowData(airway)
+```
+
+```{r}
+dim(airway)
+airway <- airway[rowData(airway)$gene_biotype == "protein_coding", ]
+dim(airway)
+```
+
+Let's start our anaylsis. Using the [DESeq2](https://bioconductor.org/packages/release/bioc/html/DESeq2.html) package, we will convert airway into an `DESeqDataSet` and build a simple model based the dexamethasone stimulation stored in the `dex` variable. 
+
+
+```{r}
+library(DESeq2)
+airway <- DESeqDataSet(airway, design = ~dex)
+airway <- DESeq(airway)
+baseline <- results(airway)
+```
+
+In addition, we'll build a second model, where we control for the effect of the cell line: 
+
+```{r}
+design(airway) <- ~ dex + cell
+airway <- DESeq(airway)
+cell_controlled <- results(airway)
+```
+
+Using the [DeeDeeExperiment](https://bioconductor.org/packages//release/bioc/html/DeeDeeExperiment.html) package, we will store these results in the theuir respective slots. 
+
+```{r}
+airway <- DeeDeeExperiment(airway)
+airway <- addDEA(airway, baseline)
+airway <- addDEA(airway, cell_controlled)
+```
+
+Let's take a look:
+
+```{r}
+airway
+```
+
+In addition to differential expression anaylsis, we can also explore some biological data mining, in this case GO ORA. Here we use the `get.gos()` function from the `exploreSE` package, but it jsut populates the FEA slot of the DeeDeeExperiment. 
+
+
+```{r}
+airway <- get.gos(obj = airway, NAME = "baseline", gene_type = "ENSEMBL")
+airway <- get.gos(obj = airway, NAME = "cell_controlled", gene_type = "ENSEMBL")
+```
+
+```{r}
+airway
+```
+
+Now that our data is ready, we can explore the data. 
+
+# Launching the App
+The simplest way to launch the app is through a call to the `exploreSE()` function. Without any arguments, the app opens and you can load in any .RDS file. Alternatively, you can supply the `file` argument, defining the path to the file, or the `object` argument when you have the object already loaded.
+
+```{r}
+app <- exploreSE(object = airway)
+if (interactive()) {
+  shiny::runApp(app, port = 1234)
+}
+```
+
+

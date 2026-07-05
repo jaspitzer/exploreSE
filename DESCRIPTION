@@ -1,13 +1,13 @@
 Package: exploreSE
 Title: Explorer for Your Bulk RNA Seq Analyses
-Version: 0.0.0.9000
+Version: 0.99.2
 Authors@R: 
-    person("Jasper", "Spitzer", , "jasspitzer135@gmail.com", role = c("aut", "cre"))
+    person("Jasper", "Spitzer", , "jasspitzer135@gmail.com", 
+        role = c("aut", "cre"), comment = c(ORCID="0000-0001-9696-2092"))
 Description: Interactive exploration of a Summarized experiment and associated DE analyses.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Imports: 
     BiocGenerics,
     clusterProfiler,
@@ -38,5 +38,12 @@ Imports:
     tidyr,
     tidyselect
 Suggests: 
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
+URL: https://github.com/jaspitzer/exploreSE
+BugReports: https://github.com/jaspitzer/exploreSE/issues
+biocViews: ShinyApps, RNASeq, Visualization, GeneExpression, Pathways, GO
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0
+VignetteBuilder: knitr

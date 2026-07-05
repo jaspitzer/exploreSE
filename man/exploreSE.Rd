@@ -4,10 +4,12 @@
 \alias{exploreSE}
 \title{exploreSE}
 \usage{
-exploreSE(file = NULL)
+exploreSE(file = NULL, object = NULL)
 }
 \arguments{
 \item{file}{a string leading to a file you want loaded as a default}
+
+\item{object}{a summarizedExperiment object (or DeeDeeExperiment) to load in}
 }
 \value{
 an application
