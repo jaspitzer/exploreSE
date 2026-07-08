@@ -301,7 +301,61 @@ server <- function(input, output, session) {
   .create_interest_color_observers(input, session, rv)
   .observe_demo_data(input, session, rv)
   .observe_inital_obj(input, session, rv)
-  .observe_load_file(input, session, rv)
+  # .observe_load_file(input, session, rv)
+
+  shiny::observe({
+    shiny::req(rv$se)
+
+    # Update grouping variable choices
+    col_vars <- colnames(SummarizedExperiment::colData(rv$se))
+
+    # Set default to "condition" if it exists, otherwise first column
+    default_var <- if ("condition" %in% col_vars) {
+      "condition"
+    } else {
+      col_vars[1]
+    }
+
+    shiny::updateSelectInput(
+      session,
+      "color_var_1",
+      choices = col_vars,
+      selected = default_var
+    )
+    shiny::updateSelectInput(
+      session,
+      "color_var_2",
+      choices = col_vars,
+      selected = default_var
+    )
+
+    # Update gene choices with searchable picker
+    gene_choices <- rownames(rv$se)
+    # if ("gene_name" %in% colnames(SummarizedExperiment::rowData(rv$se))) {
+    #   names(gene_choices) <- SummarizedExperiment::rowData(rv$se)$gene_name
+    # }
+    shinyWidgets::updatePickerInput(
+      session,
+      "gene_id",
+      choices = gene_choices,
+      selected = gene_choices[1]
+    )
+
+    # Update DE comparison choices if precomputed results exist
+    if (has_precomputed_de()) {
+      comparisons <- de_comparisons()
+      shiny::updateSelectInput(
+        session,
+        "de_comparison",
+        choices = comparisons,
+        selected = comparisons[1]
+      )
+      shiny::showNotification(
+        paste("Found", length(comparisons), "precomputed DE comparison(s)"),
+        type = "message"
+      )
+    }
+  })
 
   # precomputed results ---------
 
@@ -315,12 +369,6 @@ server <- function(input, output, session) {
     shiny::req(has_precomputed_fe())
     .fe_results_names(rv$se, input$de_comparison)
   })
-
-  # Update UI inputs when data loads
-
-  # observes the SE object and triggers a reload of the the UI, dropdown choices, etc
-
-  .observe_se_load(input, session, rv)
 
   # VST transformation -------
   vst_data <- shiny::reactive({

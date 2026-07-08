@@ -78,7 +78,7 @@ baseline <- results(airway)
 In addition, we'll build a second model, where we control for the effect of the cell line: 
 
 ```{r}
-design(airway) <- ~ dex + cell
+design(airway) <- ~ cell + dex
 airway <- DESeq(airway)
 cell_controlled <- results(airway)
 ```
@@ -86,6 +86,7 @@ cell_controlled <- results(airway)
 Using the [DeeDeeExperiment](https://bioconductor.org/packages//release/bioc/html/DeeDeeExperiment.html) package, we will store these results in the theuir respective slots. 
 
 ```{r}
+library(DeeDeeExperiment)
 airway <- DeeDeeExperiment(airway)
 airway <- addDEA(airway, baseline)
 airway <- addDEA(airway, cell_controlled)
