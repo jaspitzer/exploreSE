@@ -72,6 +72,38 @@
   # })
 }
 
+.create_rowvar_observer <- function(input, session, rv) {
+  shiny::observeEvent(input$row_data_var, {
+    shiny::req(input$row_data_var)
+    rv$row_var <- input$row_data_var
+  })
+
+  shiny::observeEvent(rv$row_var, {
+    if (
+      !is.null(rv$se) &&
+        !is.null(SummarizedExperiment::rowData(rv$se)) &&
+        rv$row_var %in% colnames(SummarizedExperiment::rowData(rv$se))
+    ) {
+      gene_choices <- SummarizedExperiment::rowData(rv$se)[,
+        rv$row_var,
+        drop = T
+      ]
+      # if ("gene_name" %in% colnames(SummarizedExperiment::rowData(rv$se))) {
+      #   names(gene_choices) <- SummarizedExperiment::rowData(rv$se)$gene_name
+      # }
+
+      shinyWidgets::updatePickerInput(
+        session,
+        "gene_id",
+        choices = gene_choices,
+        selected = gene_choices[1]
+      )
+    }
+  })
+}
+
+.gene_ident_observer <- function(input, session, rv) {}
+
 .observe_demo_data <- function(input, session, rv) {
   shiny::observe({
     if (input$use_demo) {
@@ -96,6 +128,88 @@
     rv$se <- set_object
     shiny::updateCheckboxInput(session, "use_demo", value = FALSE)
     shiny::showNotification("Data loaded successfully!", type = "message")
+  })
+}
+
+
+.observe_se_load <- function(
+  input,
+  session,
+  rv,
+  has_precomputed_de,
+  de_comparisons
+) {
+  shiny::observeEvent(rv$se, {
+    shiny::req(rv$se)
+
+    # Update grouping variable choices
+    col_vars <- colnames(SummarizedExperiment::colData(rv$se))
+    row_vars <- colnames(SummarizedExperiment::rowData(rv$se))
+
+    # Set default to "condition" if it exists, otherwise first column
+    default_col_var <- if ("condition" %in% col_vars) {
+      "condition"
+    } else {
+      col_vars[1]
+    }
+
+    shiny::updateSelectInput(
+      session,
+      "color_var_1",
+      choices = col_vars,
+      selected = default_col_var
+    )
+    shiny::updateSelectInput(
+      session,
+      "color_var_2",
+      choices = col_vars,
+      selected = default_col_var
+    )
+
+    default_row_var <- if ("gene_name" %in% row_vars) {
+      "gene_name"
+    } else if ("SYMBOL" %in% stringr::str_to_upper(row_vars)) {
+      row_vars[which(stringr::str_to_upper(row_vars) == "SYMBOL")[1]]
+    } else {
+      row_vars[1]
+    }
+    shiny::updateSelectInput(
+      session,
+      "row_data_var",
+      choices = row_vars,
+      selected = default_row_var
+    )
+
+    # Update gene choices with searchable picker
+    gene_choices <- SummarizedExperiment::rowData(rv$se)[,
+      default_row_var,
+      drop = T
+    ]
+    # if ("gene_name" %in% colnames(SummarizedExperiment::rowData(rv$se))) {
+    #   names(gene_choices) <- SummarizedExperiment::rowData(rv$se)$gene_name
+    # }
+
+    shinyWidgets::updatePickerInput(
+      session,
+      "gene_id",
+      choices = gene_choices,
+      selected = gene_choices[1]
+    )
+
+    # Update DE comparison choices if precomputed results exist
+    if (has_precomputed_de()) {
+      comparisons <- de_comparisons()
+      shiny::updateSelectInput(
+        session,
+        "de_comparison",
+        choices = comparisons,
+        selected = comparisons[1]
+      )
+      shiny::showNotification(
+        paste("Found", length(comparisons), "precomputed DE comparison(s)"),
+        type = "message"
+      )
+    }
   })
 }
 

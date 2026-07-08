@@ -18,6 +18,12 @@ ui <- shiny::fluidPage(
         condition = "output.data_loaded",
         shiny::h4("Analysis Options"),
 
+        shiny::selectInput(
+          "row_data_var",
+          "Select the gene identifier",
+          choices = NULL
+        ),
+
         shiny::h5("DE Analysis"),
         shiny::conditionalPanel(
           condition = "output.has_precomputed_de",
@@ -284,7 +290,8 @@ server <- function(input, output, session) {
     up_col = "#d62728",
     dn_col = "#1f77b4",
     highlight_col = "#FFD700",
-    color_var = NULL
+    color_var = NULL,
+    row_var = NULL
   )
 
   has_precomputed_de <- shiny::reactive({
@@ -297,66 +304,13 @@ server <- function(input, output, session) {
     .check_precomputed_fe(rv$se)
   })
 
+  # run observers --------------
   .create_dir_color_observers(input, session, rv)
   .create_interest_color_observers(input, session, rv)
   .observe_demo_data(input, session, rv)
   .observe_inital_obj(input, session, rv)
-  # .observe_load_file(input, session, rv)
-
-  shiny::observe({
-    shiny::req(rv$se)
-
-    # Update grouping variable choices
-    col_vars <- colnames(SummarizedExperiment::colData(rv$se))
-
-    # Set default to "condition" if it exists, otherwise first column
-    default_var <- if ("condition" %in% col_vars) {
-      "condition"
-    } else {
-      col_vars[1]
-    }
-
-    shiny::updateSelectInput(
-      session,
-      "color_var_1",
-      choices = col_vars,
-      selected = default_var
-    )
-    shiny::updateSelectInput(
-      session,
-      "color_var_2",
-      choices = col_vars,
-      selected = default_var
-    )
-
-    # Update gene choices with searchable picker
-    gene_choices <- rownames(rv$se)
-    # if ("gene_name" %in% colnames(SummarizedExperiment::rowData(rv$se))) {
-    #   names(gene_choices) <- SummarizedExperiment::rowData(rv$se)$gene_name
-    # }
-    shinyWidgets::updatePickerInput(
-      session,
-      "gene_id",
-      choices = gene_choices,
-      selected = gene_choices[1]
-    )
-
-    # Update DE comparison choices if precomputed results exist
-    if (has_precomputed_de()) {
-      comparisons <- de_comparisons()
-      shiny::updateSelectInput(
-        session,
-        "de_comparison",
-        choices = comparisons,
-        selected = comparisons[1]
-      )
-      shiny::showNotification(
-        paste("Found", length(comparisons), "precomputed DE comparison(s)"),
-        type = "message"
-      )
-    }
-  })
-
+  .observe_load_file(input, session, rv)
+  .create_rowvar_observer(input, session, rv)
   # precomputed results ---------
 
   # Get precomputed DE comparisons
@@ -369,6 +323,8 @@ server <- function(input, output, session) {
     shiny::req(has_precomputed_fe())
     .fe_results_names(rv$se, input$de_comparison)
   })
+
+  .observe_se_load(input, session, rv, has_precomputed_de, de_comparisons)
 
   # VST transformation -------
   vst_data <- shiny::reactive({
@@ -620,7 +576,11 @@ server <- function(input, output, session) {
   output$expr_plot <- plotly::renderPlotly({
     shiny::req(rv$se, input$gene_id, rv$color_var)
 
-    gene <- input$gene_id
+    gene <- rownames(SummarizedExperiment::rowData(rv$se)[
+      which(
+        SummarizedExperiment::rowData(rv$se)[, rv$row_var] == input$gene_id
+      ),
+    ])[1]
     counts_data <- SummarizedExperiment::assay(rv$se, "counts")[gene, ]
 
     plot_df <- data.frame(
@@ -632,13 +592,7 @@ server <- function(input, output, session) {
     ) %>%
       dplyr::filter(group %in% input$groups_to_show)
 
-    gene_label <- if (
-      "gene_name" %in% colnames(SummarizedExperiment::rowData(rv$se))
-    ) {
-      SummarizedExperiment::rowData(rv$se)[gene, "gene_name"]
-    } else {
-      gene
-    }
+    gene_label <- input$gene_id
 
     p <- ggplot2::ggplot(
       plot_df,
@@ -669,9 +623,13 @@ server <- function(input, output, session) {
   })
 
   output$expr_table <- DT::renderDT({
-    shiny::req(rv$se, input$gene_id, input$groups_to_show)
+    shiny::req(rv$se, input$gene_id, input$groups_to_show, rv$row_var)
 
-    gene <- input$gene_id
+    gene <- rownames(SummarizedExperiment::rowData(rv$se)[
+      which(
+        SummarizedExperiment::rowData(rv$se)[, rv$row_var] == input$gene_id
+      ),
+    ])[1]
     expr_data <- data.frame(
       Sample = colnames(rv$se),
       SummarizedExperiment::colData(rv$se),
