@@ -106,7 +106,8 @@ get.gos <- function(NAME, obj = dds, species = "hs", gene_type = "SYMBOL") {
 #' @param type hallmark or reactome
 #' @param conditions which conditions are compared
 #' @param species what species
-#' @param condition_var whats the variable name for this comparison
+#' @param condition_var whats the variable name for this comparison, as a bare
+#'   column name (e.g. `condition`) or a string (e.g. `"condition"`)
 #'
 #' @returns a DeeDeeExperiment or SummarizedExperiment
 #' @export
@@ -119,8 +120,10 @@ get.gsea <- function(
   type = "HALLMARK",
   conditions,
   species = "hs",
-  condition_var = condition
+  condition_var = "condition"
 ) {
+  condition_var <- rlang::ensym(condition_var)
+
   if (species == "hs") {
     SPECIES <- "HS"
   } else {
@@ -149,7 +152,7 @@ get.gsea <- function(
       BiocGenerics::as.data.frame(SummarizedExperiment::colData(obj)),
       dplyr::join_by(name == sample)
     ) %>%
-    dplyr::mutate(condition = !!rlang::sym(condition_var)) %>%
+    dplyr::mutate(condition = !!condition_var) %>%
     dplyr::filter(condition %in% conditions) %>%
     dplyr::select(gene, condition, value) %>%
     dplyr::group_by(condition, gene) %>%

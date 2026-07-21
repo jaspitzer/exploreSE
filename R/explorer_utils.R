@@ -1,7 +1,9 @@
 .check_precomputed_de <- function(SE) {
+  if (is.null(SE)) {
+    return(FALSE)
+  }
   if (
-    !is.null(SE) &&
-      methods::is(SE, "DeeDeeExperiment") &&
+    methods::is(SE, "DeeDeeExperiment") &&
       !is.null(DeeDeeExperiment::getDEANames(SE))
   ) {
     return(TRUE)
@@ -13,9 +15,11 @@
 }
 
 .check_precomputed_fe <- function(SE) {
+  if (is.null(SE)) {
+    return(FALSE)
+  }
   if (
-    !is.null(SE) &&
-      methods::is(SE, "DeeDeeExperiment") &&
+    methods::is(SE, "DeeDeeExperiment") &&
       !is.null(DeeDeeExperiment::getFEANames(SE))
   ) {
     return(TRUE)
@@ -117,7 +121,7 @@
       ggplot2::theme_light(base_size = 14) +
       ggplot2::labs(
         x = "NES (Normalized Enrichment Score)",
-        title = if (stringr::str_detect(name, "HALLMARK")) {
+        title = if (stringr::str_detect(NAME, "HALLMARK")) {
           paste("Top", N_terms, "enriched hallmark gene sets")
         } else {
           paste("Top", N_terms, "enriched Reactome gene sets")
@@ -363,10 +367,10 @@
     )
 
   # Add labels
-  if (nrow(top_genes) > 0) {
+  if (nrow(genes_to_label) > 0) {
     p <- p +
       ggplot2::geom_text(
-        data = top_genes,
+        data = genes_to_label,
         ggplot2::aes(label = gene_id),
         size = 5,
         show.legend = FALSE

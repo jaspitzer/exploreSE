@@ -11,6 +11,7 @@ Roxygen: list(markdown = TRUE)
 Imports: 
     BiocGenerics,
     clusterProfiler,
+    colourpicker,
     DeeDeeExperiment,
     DESeq2,
     dplyr,

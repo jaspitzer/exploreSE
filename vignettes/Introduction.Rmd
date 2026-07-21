@@ -3,9 +3,10 @@ title: "Introduction to exploreSE"
 author:
 - name: Jasper Spitzer
   affiliation: Institute for Human Genetics, University Hoospital Bonn, Germany
-  email:jasspitzer135@gmail.com
+  email: jasspitzer135@gmail.com
 date: "`r BiocStyle::doc_date()`"
-output: BiocStyle::html_document:
+output:
+  BiocStyle::html_document:
     toc: true
     toc_depth: 2
 vignette: >
