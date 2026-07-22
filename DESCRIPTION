@@ -38,7 +38,9 @@ Imports:
     tibble,
     tidyr,
     tidyselect
-Suggests: 
+Suggests:
+    airway,
+    BiocStyle,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)
