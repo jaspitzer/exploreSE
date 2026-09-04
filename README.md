@@ -439,21 +439,24 @@ into the differences. For this, two models can be selected and their
 respective fold changes plotted against each other.
 
 ![FC-FC plot of the baseline and cell-controlled
-models.](https://raw.githubusercontent.com/jaspitzer/exploreSE/master/vignettes/screenshots/fc_fc.png)\]
+models.](https://raw.githubusercontent.com/jaspitzer/exploreSE/master/vignettes/screenshots/fc_fc.png)
 
 # FAQ
 
-**Q: How do I add results into the summarizedExperiment?** A: The
-easiest way is to use the `DeeDeeExperiment` extension of the
+**Q: How do I add results into the summarizedExperiment?** 
+
+A: The easiest way is to use the `DeeDeeExperiment` extension of the
 `summarizedExperiment` class. You can use the dedicated DEA and FEA
 slots. There is a detailed explanation
 [here](https://bioconductor.org/packages//release/bioc/vignettes/DeeDeeExperiment/inst/doc/DeeDeeExperiment_manual.html).
 If you do not want that, you can add it to the `summarizedExperiment`
-metadata, using `de-results`and `fe_results`as names. **Q: can I use the
-explorer to perform analysis?** A: No, this app is only design to
-visualise already performed analyses. All decisions on what to test,
-what enrichments to run should happen before you start the app and make
-use of the package.
+metadata, using `de-results`and `fe_results`as names. 
+
+**Q: can I use the explorer to perform analysis?** 
+
+A: No, this app is only design to visualise already performed analyses. 
+All decisions on what to test,  what enrichments to run should happen before 
+you start the app and make use of the package.
 
 # Session Info
 
