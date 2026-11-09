@@ -69,3 +69,6 @@
 * added a landing page with thumbnails and introduction 
 * added cross-identifier matching for the context lists
 * accordingly, updated to the vignette and readme
+
+# exploreSE 0.99.19
+* author update

@@ -1,13 +1,20 @@
 Package: exploreSE
 Title: Explorer for Your Bulk RNA Seq Analyses
-Version: 0.99.18
+Version: 0.99.19
 Authors@R: 
-    person("Jasper", "Spitzer", , "jasspitzer135@gmail.com", 
-        role = c("aut", "cre"), comment = c(ORCID="0000-0001-9696-2092"))
+    c(
+        person("Jasper", "Spitzer", , "jasspitzer135@gmail.com", 
+        role = c("aut", "cre"), comment = c(ORCID="0000-0001-9696-2092")),
+        person("Laura", "Maniezki", middle = "L." , "laura.maniezki@uni-bonn.de", 
+        role = c("aut"), comment = c(ORCID="0000-0001-9962-0741")),
+        person("Maximilian", "Billmann", , "m.billmann@uni-bonn.de", 
+        role = c("aut"), comment = c(ORCID="0000-0002-6556-9594")),
+
+        )
 Description: Interactive exploration of a Summarized experiment and associated DE analyses. A shiny
  app to inspect and interact with pre-calculated differential expression and functional 
- enrichment results, and to facilitate comparisons between multiple models. This is meant
- to be a tool for exploration and discussion, rather than analysis.
+ enrichment results, to facilitate comparisons between multiple models, and to include known associations,
+ such as genetic risk factors. This is meant to be a tool for exploration and discussion, rather than analysis.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
